@@ -1,0 +1,19 @@
+# Build output
+/bin/
+
+# Test and coverage output
+/coverage*
+*.out
+*.coverprofile
+
+# Local environment files
+.env*
+!.env.example
+
+# Editor and operating-system files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
