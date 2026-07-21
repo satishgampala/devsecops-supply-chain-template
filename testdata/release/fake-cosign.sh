@@ -40,6 +40,7 @@ do
     --certificate-github-workflow-ref) ref=$2; shift 2 ;;
     --certificate-github-workflow-sha) sha=$2; shift 2 ;;
     --certificate-github-workflow-trigger) trigger=$2; shift 2 ;;
+    --) shift ;;
     --insecure-*) exit 2 ;;
     -*) exit 2 ;;
     *) artifact=$1; shift ;;
