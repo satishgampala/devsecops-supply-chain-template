@@ -50,11 +50,11 @@
 - Create: `internal/signingpolicy/policy.go`
 - Create: `internal/signingpolicy/policy_test.go`
 
-- [ ] Strictly decode a versioned policy with no unknown fields or trailing JSON.
-- [ ] Validate exact HTTPS issuer and certificate identity, repository, workflow, ref, and nonempty allowed triggers.
-- [ ] Validate lowercase full Git SHA and SHA-256 artifact digests.
-- [ ] Return deterministic, stable reason codes for every failed constraint.
-- [ ] Reject pull requests, missing constraints, duplicate artifact roles, and wildcard identities.
+- [x] Strictly decode a versioned policy with no unknown fields or trailing JSON.
+- [x] Validate exact HTTPS issuer and certificate identity, repository, workflow, ref, and nonempty allowed triggers.
+- [x] Validate lowercase full Git SHA and SHA-256 artifact digests.
+- [x] Return deterministic, stable reason codes for every failed constraint.
+- [x] Reject pull requests, missing constraints, duplicate artifact roles, and wildcard identities.
 
 ## Task 2: Add machine-readable signing verification records
 
@@ -64,10 +64,10 @@
 - Create: `cmd/signing-policy/main_test.go`
 - Create: `testdata/signing/**`
 
-- [ ] Evaluate observed certificate/workflow claims and exact artifact hashes against policy.
-- [ ] Produce stable JSON with eligibility, sorted reason codes, identity, source SHA, and artifact digests.
-- [ ] Fail nonzero for wrong issuer, identity, repository, workflow, ref, SHA, trigger, role, or digest.
-- [ ] Keep local fixtures synthetic and clearly separate from cryptographic Sigstore verification.
+- [x] Evaluate observed certificate/workflow claims and exact artifact hashes against policy.
+- [x] Produce stable JSON with eligibility, sorted reason codes, identity, source SHA, and artifact digests.
+- [x] Fail nonzero for wrong issuer, identity, repository, workflow, ref, SHA, trigger, role, or digest.
+- [x] Keep local fixtures synthetic and clearly separate from cryptographic Sigstore verification.
 
 ## Task 3: Add isolated keyless signing workflow
 
@@ -77,12 +77,12 @@
 - Create: `scripts/signing-policy-fixtures.sh`
 - Update: `Makefile`
 
-- [ ] Build M03 evidence in a read-only job with no OIDC permission.
-- [ ] Transfer a bounded artifact to a signing job that never checks out or executes transferred repository programs or scripts.
-- [ ] Grant `id-token: write` only to the signing job and gate it to protected default-branch context.
-- [ ] Keylessly sign the OCI archive, raw SPDX SBOM, and local provenance with Cosign 3.1.2.
-- [ ] Verify each bundle immediately using all exact certificate and GitHub workflow flags.
-- [ ] Preserve bundles, observed claims, policy decision, and source evidence for later release evaluation.
+- [x] Build M03 evidence in a read-only job with no OIDC permission.
+- [x] Transfer a bounded artifact to a signing job that never checks out or executes transferred repository programs or scripts.
+- [x] Grant `id-token: write` only to the signing job and gate it to protected default-branch context.
+- [x] Configure keyless signing of the OCI archive, raw SPDX SBOM, and local provenance with Cosign 3.1.2.
+- [x] Verify each bundle immediately using all exact certificate and GitHub workflow flags.
+- [x] Preserve bundles, observed claims, policy decision, and source evidence for later release evaluation.
 
 ## Task 4: Verify and document M04
 
@@ -96,10 +96,10 @@
 - Create: `docs/security/signing.md`
 - Create: `docs/roadmap/evidence/M04/verification.md`
 
-- [ ] Run policy, negative, host, scanner, actionlint, and zizmor gates.
-- [ ] Prove signing context rejects pull requests, feature refs, wrong SHAs, and wrong artifact digests.
-- [ ] Confirm no private signing key or credential file exists in tracked content or history.
-- [ ] Record local policy implementation complete while hosted keyless sign/verify remains pending.
+- [x] Run policy, negative, host, scanner, actionlint, and zizmor gates.
+- [x] Prove signing context rejects pull requests, feature refs, wrong SHAs, and wrong artifact digests.
+- [x] Confirm no private signing key or credential file exists in tracked content or history.
+- [x] Record local policy implementation complete while hosted keyless sign/verify remains pending.
 
 ## Completion gate
 

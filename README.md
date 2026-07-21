@@ -2,11 +2,11 @@
 
 An open-source reference implementation for taking a deliberately small Go service through a progressively hardened software-supply-chain workflow. The six-milestone roadmap separates the pipeline baseline, layered security scanning, SBOM, provenance, signing, and release policy so each control can be verified with evidence.
 
-> **Current state:** M03 SBOM and provenance is **implemented locally**. The [reproducibility, linkage, and tamper gates](docs/roadmap/evidence/M03/verification.md) pass. GitHub-hosted runs remain pending; signing and release eligibility begin in M04–M05.
+> **Current state:** M04 keyless signing controls are **implemented locally**. The [exact-identity policy and negative gates](docs/roadmap/evidence/M04/verification.md) pass. GitHub-hosted keyless execution remains pending; release eligibility begins in M05.
 
 ## Project outcome
 
-The completed template is intended to produce a tested, scanned, SBOM-described, provenance-attested, signed, and policy-verified release artifact. M01 establishes the service and hardened CI baseline. M02 adds layered security controls with normalized evidence. M03 adds a reproducible OCI archive, SPDX 2.3 inventory, SLSA Provenance v1 statement, and digest-bound verification.
+The completed template is intended to produce a tested, scanned, SBOM-described, provenance-attested, signed, and policy-verified release artifact. M01 establishes the service and hardened CI baseline. M02 adds layered security controls. M03 binds inventory and provenance to a reproducible OCI subject. M04 isolates keyless signing and enforces exact Sigstore and workflow identities.
 
 ## Explore the architecture
 
@@ -16,6 +16,7 @@ The completed template is intended to produce a tested, scanned, SBOM-described,
 - [Pipeline flow and planned controls](docs/architecture/pipeline-flow.md)
 - [Security scanning and policy](docs/security/scanning.md)
 - [SBOM and provenance](docs/security/sbom-provenance.md)
+- [Keyless signing and identity policy](docs/security/signing.md)
 - [ADR 0001: Use a Go reference service](docs/decisions/0001-use-go-reference-service.md)
 - [Roadmap](docs/roadmap/ROADMAP.md) and [current status](docs/roadmap/STATUS.md)
 
@@ -25,6 +26,7 @@ The completed template is intended to produce a tested, scanned, SBOM-described,
 - GNU Make
 - Docker with BuildKit for the container-only commands
 - `curl` for manual endpoint checks
+- `jq` for local policy fixture generation
 - Network access for current advisory databases when running live security scans
 
 The host-side verification path does not require Docker, cloud credentials, a paid registry, or a cluster. The live M02 scanner path requires Docker but no registry credentials.
@@ -59,6 +61,12 @@ Build twice and compare the OCI archive, canonical SBOM projection, local proven
 
 ```sh
 make integrity-repro
+```
+
+Run deterministic M04 identity and signing-context tests:
+
+```sh
+make signing-test
 ```
 
 Start the reference service in a second terminal:
@@ -115,6 +123,7 @@ The API accepts values up to 1 KiB in JSON request bodies capped at 4 KiB. It is
 | `make security-fixtures` | Prove each local scanner rejects its isolated seeded defect. | Yes |
 | `make integrity` | Build the OCI archive and verify its SPDX and local provenance evidence. | Yes |
 | `make integrity-repro` | Run two clean generations and compare deterministic outputs. | Yes |
+| `make signing-test` | Test exact signing identity, context, artifact, and failure policy. | No |
 
 ## Current security design
 
@@ -131,13 +140,15 @@ The current contract is intentionally explicit:
 - no repository secrets, Docker socket mount, or privileged release behavior in pull-request scanner jobs;
 - a single-platform OCI archive whose index, manifest, config, and layers are independently hashed;
 - an SPDX 2.3 inventory generated from the final archive and bound to its manifest digest; and
-- explicit local SLSA provenance plus a protected default-branch workflow for platform attestations.
+- explicit local SLSA provenance plus a protected default-branch workflow for platform attestations;
+- an OIDC-only signing job separated from repository checkout and policy evaluation; and
+- exact Fulcio issuer, certificate SAN, repository, workflow, ref, SHA, trigger, artifact, SCT, and transparency-log requirements.
 
-The [M02 scanning guide](docs/security/scanning.md) documents scanner policy. The [M03 integrity guide](docs/security/sbom-provenance.md) documents artifact, SBOM, provenance, and hosted-attestation boundaries.
+The [M02 scanning guide](docs/security/scanning.md), [M03 integrity guide](docs/security/sbom-provenance.md), and [M04 signing guide](docs/security/signing.md) define the implemented control boundaries.
 
 ## Current limitations
 
-- No artifact or attestation is signed; keyless signing is planned for M04.
+- No successful keyless signature is claimed until an authorized hosted run produces verifiable Sigstore bundles.
 - No release-eligibility decision or deployment gate exists; that policy is planned for M05.
 - The OCI archive and local statements are not published by local commands.
 - No successful GitHub Actions, hosted CodeQL, hosted scanner, or hosted attestation run is claimed here.
@@ -149,7 +160,7 @@ The [M02 scanning guide](docs/security/scanning.md) documents scanner policy. Th
 | [M01 — Pipeline baseline](docs/roadmap/milestones/M01-pipeline-baseline.md) | In Progress | Minimal service, deterministic tests, hardened container, and least-privilege CI foundation. |
 | [M02 — Security scanning](docs/roadmap/milestones/M02-security-scanning.md) | Implemented Locally | Layered source, dependency, secret, workflow, IaC, container, and license checks. |
 | [M03 — SBOM and provenance](docs/roadmap/milestones/M03-sbom-provenance.md) | Implemented Locally | Artifact-bound component inventory and build provenance. |
-| [M04 — Signing](docs/roadmap/milestones/M04-signing.md) | Not Started | Keyless signing with strict workflow-identity verification. |
+| [M04 — Signing](docs/roadmap/milestones/M04-signing.md) | Implemented Locally | Keyless signing with strict workflow-identity verification. |
 | [M05 — Release policy](docs/roadmap/milestones/M05-release-policy.md) | Not Started | Explainable deployment-eligibility decisions bound to immutable artifacts. |
 | [M06 — Template release](docs/roadmap/milestones/M06-template-release.md) | Not Started | Clean consumer adoption, demonstration, and versioned release. |
 
