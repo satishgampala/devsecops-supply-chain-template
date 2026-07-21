@@ -8,7 +8,7 @@
 
 | Milestone | Status | Completion evidence |
 | --- | --- | --- |
-| M01 — Reference service and pipeline baseline | In Progress | Not yet recorded |
+| M01 — Reference service and pipeline baseline | In Progress | [Local verification passed; hosted run pending](evidence/M01/verification.md) |
 | M02 — Source, dependency, IaC, and container scanning | Not Started | Planned after M01 |
 | M03 — SBOM and SLSA provenance | Not Started | Planned after M02 |
 | M04 — Keyless signing and identity verification | Not Started | Planned after M03 |
@@ -21,13 +21,11 @@
 
 ## Next action
 
-Complete the M01 implementation workstreams, review their integrated diff, and run the fresh host, workflow, and container verification gates from the [M01 implementation plan](implementation-plans/2026-07-21-M01-pipeline-baseline.md). Record only observed results before considering any M01 exit criterion complete.
+Push `feat/m01-pipeline-baseline`, open a pull request, and record the first successful GitHub-hosted workflow run in the [M01 evidence](evidence/M01/verification.md).
 
 ## Open verification work
 
-- Host formatting, vet, unit, race, and static-build checks have not been recorded here.
-- Workflow syntax and effective least-privilege configuration have not been recorded here.
-- Container build, runtime user, health, and endpoint smoke results have not been recorded here.
-- Manual input, shutdown, workflow-trust-boundary, secret-pattern, and runtime-content reviews have not been recorded here.
+- A GitHub-hosted pull-request run has not yet been recorded.
+- Remote branch-protection behavior cannot be verified until the repository settings and pull-request checks are active.
 
-These are pending M01 gates, not evidence that the later M02–M06 controls exist.
+These are pending M01 gates. The completed local checks are not evidence that the later M02–M06 controls exist.

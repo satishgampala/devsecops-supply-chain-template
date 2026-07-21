@@ -2,7 +2,7 @@
 
 An open-source reference implementation for taking a deliberately small Go service through a progressively hardened software-supply-chain workflow. The six-milestone roadmap separates the pipeline baseline from later scanning, SBOM, provenance, signing, and release-policy work so that each control can be verified with evidence.
 
-> **Current state:** M01 — Reference Service and Pipeline Baseline is **In Progress**. Local and CI verification evidence has not yet been recorded. Security scanning, SBOM generation, provenance, signing, and release eligibility are planned for M02–M05 and are not implemented by M01.
+> **Current state:** M01 — Reference Service and Pipeline Baseline is **In Progress**. [Local verification evidence](docs/roadmap/evidence/M01/verification.md) is recorded; the first GitHub-hosted run remains pending. Security scanning, SBOM generation, provenance, signing, and release eligibility are planned for M02–M05 and are not implemented by M01.
 
 ## Project outcome
 
