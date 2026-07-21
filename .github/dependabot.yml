@@ -7,6 +7,8 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       go-minor-and-patch:
@@ -23,6 +25,8 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       docker-minor-and-patch:
@@ -39,6 +43,8 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       actions-minor-and-patch:
