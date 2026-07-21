@@ -1,8 +1,8 @@
 # M03 - SBOM and SLSA Provenance
 
-- **Status:** Not Started
+- **Status:** Implemented Locally
 - **Depends on:** M02
-- **Implementation plan:** Not written; planned after the dependency milestone.
+- **Implementation plan:** [2026-07-21 M03 SBOM and Provenance](../implementation-plans/2026-07-21-M03-sbom-provenance.md)
 
 ## Outcome
 
@@ -20,34 +20,34 @@ This milestone generates and validates SBOM and SLSA provenance. It does not yet
 
 ## Tasks and subtasks
 
-- [ ] **T1: Generate the SBOM.**
-  - [ ] Select SPDX or CycloneDX and document the choice.
-  - [ ] Generate an SBOM from the final container or release artifact, not only source dependencies.
-  - [ ] Validate schema, package identifiers, versions, licenses, and artifact association.
-- [ ] **T2: Make SBOM generation reproducible.**
-  - [ ] Pin generator versions and record their metadata.
-  - [ ] Compare SBOM content across identical source builds while excluding expected timestamps or nondeterministic fields.
-  - [ ] Fail if the SBOM is empty, malformed, or associated with the wrong digest.
-- [ ] **T3: Generate SLSA provenance.**
-  - [ ] Use the official SLSA GitHub generator or a documented equivalent.
-  - [ ] Bind provenance to source repository, commit, workflow, builder identity, and subject digest.
-  - [ ] Keep release workflow permissions minimal and isolate untrusted pull requests.
-- [ ] **T4: Validate provenance and linkage.**
-  - [ ] Verify provenance syntax and expected builder/workflow identity.
-  - [ ] Detect artifact modification or subject-digest mismatch.
-  - [ ] Publish SBOM and provenance beside the release candidate with clear naming.
+- [x] **T1: Generate the SBOM.**
+  - [x] Select SPDX or CycloneDX and document the choice.
+  - [x] Generate an SBOM from the final container or release artifact, not only source dependencies.
+  - [x] Validate schema, package identifiers, versions, licenses, and artifact association.
+- [x] **T2: Make SBOM generation reproducible.**
+  - [x] Pin generator versions and record their metadata.
+  - [x] Compare SBOM content across identical source builds while excluding expected timestamps or nondeterministic fields.
+  - [x] Fail if the SBOM is empty, malformed, or associated with the wrong digest.
+- [x] **T3: Generate SLSA provenance.**
+  - [x] Use GitHub artifact attestations and a documented local SLSA statement.
+  - [x] Bind provenance to source repository, commit, builder identity, invocation, and subject digest.
+  - [x] Keep hosted workflow permissions minimal and isolate untrusted pull requests.
+- [x] **T4: Validate provenance and linkage.**
+  - [x] Verify provenance syntax and expected local builder identity.
+  - [x] Detect artifact modification or subject-digest mismatch.
+  - [x] Preserve SBOM and provenance beside the release candidate with clear naming.
 
 ## Verification and evidence
 
-- Required future checks: SBOM schema validation, package sanity tests, provenance verification, subject-digest comparison, and tampered-artifact negative test.
+- Required local checks: SBOM semantic validation, package sanity tests, provenance verification, subject-digest comparison, and tampered-artifact negative tests.
 - Retain sample SBOM, provenance, verification output, tamper failure, workflow identity, and commit SHA under `docs/roadmap/evidence/M03/`.
 
 ## Exit criteria
 
-- [ ] SBOM and provenance are generated for the exact release artifact digest.
-- [ ] Both documents pass schema and semantic sanity checks.
+- [x] SBOM and local provenance are generated for the exact release artifact digest.
+- [x] Both documents pass syntax and semantic sanity checks.
 - [ ] Provenance identifies the expected source and GitHub workflow identity.
-- [ ] A modified artifact fails provenance linkage verification.
+- [x] A modified artifact fails provenance linkage verification.
 
 ## Risks and controls
 

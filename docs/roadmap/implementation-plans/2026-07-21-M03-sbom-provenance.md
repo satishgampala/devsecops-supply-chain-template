@@ -63,11 +63,11 @@
 - Create: `internal/integrity/oci_test.go`
 - Create: `testdata/integrity/oci/**`
 
-- [ ] Parse OCI `index.json` and its single image manifest without extracting archive paths.
-- [ ] Validate platform, media types, descriptor sizes, SHA-256 syntax, blob presence, and blob hashes.
-- [ ] Stream large layer hashing instead of loading layers into memory.
-- [ ] Return manifest digest and independent archive-file SHA-256.
-- [ ] Reject missing, duplicate, malformed, wrong-platform, and tampered fixtures.
+- [x] Parse OCI `index.json` and its single image manifest without extracting archive paths.
+- [x] Validate platform, media types, descriptor sizes, SHA-256 syntax, blob presence, and blob hashes.
+- [x] Stream large layer hashing instead of loading layers into memory.
+- [x] Return manifest digest and independent archive-file SHA-256.
+- [x] Reject missing, duplicate, malformed, wrong-platform, and tampered fixtures.
 
 ## Task 2: Validate and canonicalize SPDX 2.3
 
@@ -77,11 +77,11 @@
 - Create: `internal/integrity/spdx_test.go`
 - Create: `testdata/integrity/spdx/**`
 
-- [ ] Validate SPDX document identity, creator time, package fields, unique IDs, and root description.
-- [ ] Bind the root image package checksum and version to the OCI manifest digest.
-- [ ] Require the application module and `stdlib` package at Go 1.26.5.
-- [ ] Produce a stable canonical projection excluding `creationInfo.created` and `documentNamespace` only.
-- [ ] Reject empty, malformed, duplicate-ID, missing-runtime, and wrong-digest documents.
+- [x] Validate SPDX document identity, creator time, package fields, unique IDs, and root description.
+- [x] Bind the root image package checksum and version to the OCI manifest digest.
+- [x] Require the application module and `stdlib` package at Go 1.26.5.
+- [x] Produce a stable canonical projection excluding `creationInfo.created` and `documentNamespace` only.
+- [x] Reject empty, malformed, duplicate-ID, missing-runtime, and wrong-digest documents.
 
 ## Task 3: Generate and verify SLSA provenance
 
@@ -92,11 +92,11 @@
 - Create: `cmd/supply-chain/main.go`
 - Create: `testdata/integrity/provenance/**`
 
-- [ ] Generate an in-toto SLSA Provenance v1 statement from explicit inputs only.
-- [ ] Verify artifact name/digest, source URI/commit, build type, builder ID, and invocation ID.
-- [ ] Sort subjects and dependencies before encoding.
-- [ ] Add `subject`, `canonicalize`, `provenance`, and `verify` command modes.
-- [ ] Prove wrong subject, source, builder, predicate type, and tampered artifact fail.
+- [x] Generate an in-toto SLSA Provenance v1 statement from explicit inputs only.
+- [x] Verify artifact name/digest, source URI/commit, build type, builder ID, and invocation ID.
+- [x] Sort subjects and dependencies before encoding.
+- [x] Add `subject`, `canonicalize`, `provenance`, and `verify` command modes.
+- [x] Prove wrong subject, source, builder, predicate type, and tampered artifact fail.
 
 ## Task 4: Add reproducible local generation
 
@@ -107,11 +107,11 @@
 - Update: `Makefile`
 - Update: `.gitignore`
 
-- [ ] Export one OCI archive with `SOURCE_DATE_EPOCH=0`, `--provenance=false`, and `linux/amd64`.
-- [ ] Generate raw SPDX 2.3 from the final archive through the digest-pinned Syft container.
-- [ ] Generate the local SLSA statement and run the integrated verifier.
-- [ ] Record artifact, SBOM, provenance, and canonical-SBOM checksums.
-- [ ] Build twice and prove byte-identical OCI archives, canonical SBOMs, and local provenance statements.
+- [x] Export one OCI archive with `SOURCE_DATE_EPOCH=0`, `--provenance=false`, and `linux/amd64`.
+- [x] Generate raw SPDX 2.3 from the final archive through the digest-pinned Syft container.
+- [x] Generate the local SLSA statement and run the integrated verifier.
+- [x] Record artifact, SBOM, provenance, and canonical-SBOM checksums.
+- [x] Build twice and prove byte-identical OCI archives, canonical SBOMs, and local provenance statements.
 
 ## Task 5: Add hosted artifact attestations
 
@@ -119,11 +119,11 @@
 
 - Create: `.github/workflows/provenance.yml`
 
-- [ ] Trigger only protected default-branch pushes and manual dispatch, never pull requests.
-- [ ] Grant `id-token`, `attestations`, and artifact-metadata writes only to the attestation job.
-- [ ] Generate provenance and SPDX attestations for the exact manifest digest with SHA-pinned `actions/attest`.
-- [ ] Preserve the OCI archive, raw/canonical SBOM, local statement, checksums, and platform bundles as a bounded artifact.
-- [ ] Keep action references immutable and repository checkout credential-free.
+- [x] Trigger only protected default-branch pushes and manual dispatch, never pull requests.
+- [x] Grant `id-token`, `attestations`, and artifact-metadata writes only to the attestation job.
+- [x] Generate provenance and SPDX attestations for the exact manifest digest with SHA-pinned `actions/attest`.
+- [x] Preserve the OCI archive, raw/canonical SBOM, local statement, checksums, and platform bundles as a bounded artifact.
+- [x] Keep action references immutable and repository checkout credential-free.
 
 ## Task 6: Verify and document M03
 
@@ -137,10 +137,10 @@
 - Create: `docs/security/sbom-provenance.md`
 - Create: `docs/roadmap/evidence/M03/verification.md`
 
-- [ ] Run host, race, scanner, container, actionlint, integrity, reproducibility, and tamper gates.
-- [ ] Record exact subject, archive, SBOM, provenance, and canonical hashes.
-- [ ] Document raw-versus-canonical SBOM behavior and the distinction between local statements and hosted attestations.
-- [ ] Mark local M03 implementation complete while keeping hosted attestation execution pending.
+- [x] Run host, race, scanner, container, actionlint, integrity, reproducibility, and tamper gates.
+- [x] Record exact subject, archive, SBOM, provenance, and canonical hashes.
+- [x] Document raw-versus-canonical SBOM behavior and the distinction between local statements and hosted attestations.
+- [x] Mark local M03 implementation complete while keeping hosted attestation execution pending.
 
 ## Completion gate
 
