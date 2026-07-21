@@ -12,7 +12,7 @@ SUBJECT_NAME=${SUBJECT_NAME:-ghcr.io/satishgampala/devsecops-supply-chain-templa
 BUILD_TYPE=${BUILD_TYPE:-https://github.com/satishgampala/devsecops-supply-chain-template/buildtypes/container/v1}
 BUILDER_ID=${BUILDER_ID:-https://github.com/satishgampala/devsecops-supply-chain-template/builders/local-provenance-v1}
 INVOCATION_ID=${INVOCATION_ID:-local:$SOURCE_DIGEST}
-GO_VERSION=${GO_VERSION:-1.26.5}
+GO_VERSION=${GO_VERSION:-go1.26.5}
 MODULE_NAME=${MODULE_NAME:-github.com/satishgampala/devsecops-supply-chain-template}
 
 SYFT_IMAGE='docker.io/anchore/syft@sha256:b4f1df79f97b817682d8b5ff941eb6bfe74f6172553a5e312c75bbc2eabc405c'
