@@ -30,6 +30,7 @@ func TestInspectOCIArchiveRejectsInvalidEvidence(t *testing.T) {
 	}{
 		{name: "wrong platform", options: archiveOptions{architecture: "arm64"}},
 		{name: "tampered layer", options: archiveOptions{tamperLayer: true}},
+		{name: "oversized layer", options: archiveOptions{oversizedLayer: true}},
 		{name: "missing manifest", options: archiveOptions{omitManifest: true}},
 		{name: "duplicate index", options: archiveOptions{duplicateIndex: true}},
 	}
@@ -46,6 +47,7 @@ func TestInspectOCIArchiveRejectsInvalidEvidence(t *testing.T) {
 type archiveOptions struct {
 	architecture   string
 	tamperLayer    bool
+	oversizedLayer bool
 	omitManifest   bool
 	duplicateIndex bool
 }
@@ -66,6 +68,9 @@ func writeOCIArchive(t *testing.T, options archiveOptions) (string, string) {
 	layer := []byte("application-layer")
 	configDescriptor := ociDescriptor{MediaType: "application/vnd.oci.image.config.v1+json", Digest: digestBytes(config), Size: int64(len(config))}
 	layerDescriptor := ociDescriptor{MediaType: "application/vnd.oci.image.layer.v1.tar+gzip", Digest: digestBytes(layer), Size: int64(len(layer))}
+	if options.oversizedLayer {
+		layerDescriptor.Size = maxOCILayerSize + 1
+	}
 	manifest := ociManifest{SchemaVersion: 2, MediaType: ociManifestMediaType, Config: configDescriptor, Layers: []ociDescriptor{layerDescriptor}}
 	manifestBytes, err := json.Marshal(manifest)
 	if err != nil {

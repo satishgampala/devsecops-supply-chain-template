@@ -16,6 +16,8 @@ const (
 	ociIndexMediaType    = "application/vnd.oci.image.index.v1+json"
 	ociManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
 	maxOCIJSONSize       = 1 << 20
+	maxOCILayerSize      = 1 << 30
+	maxOCIArchiveSize    = 2 << 30
 )
 
 type ArchiveInfo struct {
@@ -118,6 +120,13 @@ func hashFile(path string) (string, error) {
 		return "", fmt.Errorf("open archive: %w", err)
 	}
 	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return "", fmt.Errorf("stat archive: %w", err)
+	}
+	if info.Size() < 0 || info.Size() > maxOCIArchiveSize {
+		return "", fmt.Errorf("archive exceeds size limit")
+	}
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		return "", fmt.Errorf("hash archive: %w", err)
@@ -151,6 +160,9 @@ func verifyDescriptor(path string, descriptor ociDescriptor) error {
 	if err := validateDescriptor(descriptor); err != nil {
 		return err
 	}
+	if descriptor.Size > maxOCILayerSize {
+		return fmt.Errorf("descriptor exceeds layer size limit")
+	}
 	file, err := safeio.Open(path)
 	if err != nil {
 		return err
@@ -178,7 +190,7 @@ func verifyDescriptor(path string, descriptor ociDescriptor) error {
 			return fmt.Errorf("descriptor size mismatch")
 		}
 		hash := sha256.New()
-		written, err := io.Copy(hash, reader)
+		written, err := io.CopyN(hash, reader, descriptor.Size)
 		if err != nil {
 			return fmt.Errorf("hash descriptor: %w", err)
 		}
