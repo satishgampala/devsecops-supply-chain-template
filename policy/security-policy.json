@@ -37,5 +37,15 @@
     "GPL-3.0-only",
     "SSPL-1.0"
   ],
-  "exceptions": []
+  "exceptions": [
+    {
+      "id": "release-cosign-argv-g204",
+      "owner": "project-maintainers",
+      "reason": "Cosign uses a literal executable and direct argument vector without shell parsing; option parsing is terminated before the artifact path.",
+      "scanner": "gosec",
+      "rule": "G204",
+      "artifact": "internal/releasepolicy/cosign.go",
+      "expiresOn": "2026-10-19"
+    }
+  ]
 }

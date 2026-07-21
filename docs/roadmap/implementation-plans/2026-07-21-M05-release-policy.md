@@ -25,7 +25,7 @@
 
 | Input | Required value |
 | --- | --- |
-| Security policy SHA-256 | `95c6cdef0b7e6da8775f8e7622468bf32024e6bc147ba9eca8c3106b7b3491fb` |
+| Security policy SHA-256 | `d9a881d5e4752ab6af5e31be9958ce0ec02a96dfc108ee23a0734e5d9828e736` |
 | Signing policy SHA-256 | `f5f43f291e56e05d3454d7d8d220134e2cdbcbdc29666531ea98c1a8613ab4d2` |
 | Cosign | `v3.1.2` |
 | Platform | `linux/amd64` |
