@@ -84,8 +84,9 @@ func testManifest() Manifest {
 		return EvidenceRef{Path: path, SHA256: fmt.Sprintf("%064x", index)}
 	}
 	return Manifest{
-		SchemaVersion:  SchemaVersion,
-		EvaluationTime: "2026-07-21T12:00:00Z",
+		SchemaVersion:       SchemaVersion,
+		ReleasePolicySHA256: strings.Repeat("e", 64),
+		EvaluationTime:      "2026-07-21T12:00:00Z",
 		Artifact: Artifact{
 			Name:           "ghcr.io/example/service",
 			ManifestDigest: "sha256:" + strings.Repeat("c", 64),

@@ -15,6 +15,7 @@ const SchemaVersion = "1.0"
 const (
 	ReasonArtifactDigestMismatch   = "ARTIFACT_DIGEST_MISMATCH"
 	ReasonEvidenceHashMismatch     = "EVIDENCE_HASH_MISMATCH"
+	ReasonEvaluationTimeMismatch   = "EVALUATION_TIME_MISMATCH"
 	ReasonExceptionExpired         = "EXCEPTION_EXPIRED"
 	ReasonIntegrityInvalid         = "INTEGRITY_INVALID"
 	ReasonMalformedEvidence        = "MALFORMED_EVIDENCE"
@@ -51,13 +52,14 @@ type Policy struct {
 }
 
 type Manifest struct {
-	SchemaVersion  string            `json:"schemaVersion"`
-	EvaluationTime string            `json:"evaluationTime"`
-	Artifact       Artifact          `json:"artifact"`
-	Tests          EvidenceRef       `json:"tests"`
-	Security       SecurityEvidence  `json:"security"`
-	Integrity      IntegrityEvidence `json:"integrity"`
-	Signing        SigningEvidence   `json:"signing"`
+	SchemaVersion       string            `json:"schemaVersion"`
+	ReleasePolicySHA256 string            `json:"releasePolicySHA256"`
+	EvaluationTime      string            `json:"evaluationTime"`
+	Artifact            Artifact          `json:"artifact"`
+	Tests               EvidenceRef       `json:"tests"`
+	Security            SecurityEvidence  `json:"security"`
+	Integrity           IntegrityEvidence `json:"integrity"`
+	Signing             SigningEvidence   `json:"signing"`
 }
 
 type Artifact struct {
@@ -109,14 +111,15 @@ type TestResult struct {
 }
 
 type Decision struct {
-	SchemaVersion string            `json:"schemaVersion"`
-	PolicyVersion string            `json:"policyVersion"`
-	PolicySHA256  string            `json:"policySHA256"`
-	EvaluatedAt   string            `json:"evaluatedAt"`
-	Eligible      bool              `json:"eligible"`
-	ReasonCodes   []string          `json:"reasonCodes"`
-	Artifact      DecisionArtifact  `json:"artifact"`
-	Evidence      []EvidenceSummary `json:"evidence"`
+	SchemaVersion  string            `json:"schemaVersion"`
+	PolicyVersion  string            `json:"policyVersion"`
+	PolicySHA256   string            `json:"policySHA256"`
+	ManifestSHA256 string            `json:"manifestSHA256"`
+	EvaluatedAt    string            `json:"evaluatedAt"`
+	Eligible       bool              `json:"eligible"`
+	ReasonCodes    []string          `json:"reasonCodes"`
+	Artifact       DecisionArtifact  `json:"artifact"`
+	Evidence       []EvidenceSummary `json:"evidence"`
 }
 
 type DecisionArtifact struct {
@@ -179,6 +182,9 @@ func (policy Policy) Validate() error {
 func (manifest Manifest) Validate() error {
 	if manifest.SchemaVersion != SchemaVersion {
 		return fmt.Errorf("unsupported release manifest schema")
+	}
+	if !validHex(manifest.ReleasePolicySHA256, 64) {
+		return fmt.Errorf("release policy digest is invalid")
 	}
 	if _, err := time.Parse(time.RFC3339, manifest.EvaluationTime); err != nil {
 		return fmt.Errorf("evaluation time must be RFC3339")
