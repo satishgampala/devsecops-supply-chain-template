@@ -32,9 +32,7 @@ type SignatureVerifier interface {
 	Verify(context.Context, SignatureRequest) error
 }
 
-type CosignVerifier struct {
-	Binary string
-}
+type CosignVerifier struct{}
 
 func (verifier CosignVerifier) Version(ctx context.Context) (string, error) {
 	output, err := verifier.run(ctx, "version")
@@ -61,6 +59,7 @@ func (verifier CosignVerifier) Verify(ctx context.Context, request SignatureRequ
 		"--certificate-github-workflow-ref", request.WorkflowRef,
 		"--certificate-github-workflow-sha", request.WorkflowSHA,
 		"--certificate-github-workflow-trigger", request.WorkflowTrigger,
+		"--",
 		request.ArtifactPath,
 	)
 	if err != nil {
@@ -70,17 +69,10 @@ func (verifier CosignVerifier) Verify(ctx context.Context, request SignatureRequ
 }
 
 func (verifier CosignVerifier) run(ctx context.Context, arguments ...string) (string, error) {
-	binary := strings.TrimSpace(verifier.Binary)
-	if binary == "" {
-		binary = "cosign"
-	}
-	path, err := exec.LookPath(binary)
-	if err != nil {
-		return "", err
-	}
 	commandContext, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
-	command := exec.CommandContext(commandContext, path, arguments...)
+	// #nosec G204 -- the executable is literal and argv is passed directly without shell parsing.
+	command := exec.CommandContext(commandContext, "cosign", arguments...)
 	var output bytes.Buffer
 	limited := &cappedWriter{buffer: &output, remaining: 64 << 10}
 	command.Stdout = limited

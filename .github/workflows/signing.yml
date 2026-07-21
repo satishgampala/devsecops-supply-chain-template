@@ -300,7 +300,6 @@ jobs:
             -evidence-root .local/release-evidence \
             -manifest release-evidence.json \
             -evaluation-time "$EVALUATION_TIME" \
-            -cosign cosign \
             -output .local/release-evidence/release-decision.json
 
       - name: Retain signing decision

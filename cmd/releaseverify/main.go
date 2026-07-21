@@ -29,12 +29,11 @@ func run(arguments []string, stdout io.Writer) (int, error) {
 	manifestPath := flags.String("manifest", "release-evidence.json", "manifest path beneath evidence root")
 	evaluationTime := flags.String("evaluation-time", "", "explicit RFC3339 release evaluation time")
 	outputPath := flags.String("output", "", "path for release decision JSON")
-	cosignBinary := flags.String("cosign", "cosign", "Cosign executable name or path")
 	if err := flags.Parse(arguments); err != nil {
 		return 2, fmt.Errorf("parse flags: %w", err)
 	}
-	if flags.NArg() != 0 || anyBlank(*policyPath, *evidenceRoot, *manifestPath, *evaluationTime, *outputPath, *cosignBinary) {
-		return 2, fmt.Errorf("-policy, -evidence-root, -manifest, -evaluation-time, -output, and -cosign are required")
+	if flags.NArg() != 0 || anyBlank(*policyPath, *evidenceRoot, *manifestPath, *evaluationTime, *outputPath) {
+		return 2, fmt.Errorf("-policy, -evidence-root, -manifest, -evaluation-time, and -output are required")
 	}
 
 	policyFile, err := safeio.Open(*policyPath)
@@ -72,7 +71,7 @@ func run(arguments []string, stdout io.Writer) (int, error) {
 		return 2, fmt.Errorf("validate release manifest: %w", err)
 	}
 
-	verifier := releasepolicy.CosignVerifier{Binary: strings.TrimSpace(*cosignBinary)}
+	verifier := releasepolicy.CosignVerifier{}
 	decision := releasepolicy.Evaluate(context.Background(), policy, policyHash, manifest, manifestHash, strings.TrimSpace(*evaluationTime), store, verifier)
 	output, err := safeio.Create(*outputPath)
 	if err != nil {

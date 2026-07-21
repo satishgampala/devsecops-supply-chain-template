@@ -11,7 +11,6 @@ EVIDENCE_DIR="$BASE_DIR/evidence"
 DECISION_DIR="$BASE_DIR/decisions"
 EVALUATION_TIME=${EVALUATION_TIME:-2026-07-21T12:00:00Z}
 SOURCE_DIGEST=$(git -C "$ROOT" rev-parse HEAD)
-FAKE_COSIGN="$ROOT/testdata/release/fake-cosign.sh"
 
 case "$BASE_DIR" in
   "$ROOT"/*) ;;
@@ -25,7 +24,11 @@ if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=all)" ]; then
   exit 2
 fi
 
-mkdir -p "$SECURITY_DIR/normalized" "$SIGNING_DIR" "$EVIDENCE_DIR" "$DECISION_DIR"
+mkdir -p "$SECURITY_DIR/normalized" "$SIGNING_DIR" "$EVIDENCE_DIR" "$DECISION_DIR" "$BASE_DIR/bin"
+cp -- "$ROOT/testdata/release/fake-cosign.sh" "$BASE_DIR/bin/cosign"
+chmod 700 "$BASE_DIR/bin/cosign"
+PATH="$BASE_DIR/bin:$PATH"
+export PATH
 for name in clean missing-sbom signature-invalid policy-mismatch time-mismatch
 do
   rm -f -- "$DECISION_DIR/$name.json"
@@ -115,7 +118,6 @@ verify_release() {
     -evidence-root "${EVIDENCE_DIR#"$ROOT"/}" \
     -manifest release-evidence.json \
     -evaluation-time "$EVALUATION_TIME" \
-    -cosign "$FAKE_COSIGN" \
     -output "$output" \
     "$@"
 }
@@ -166,7 +168,6 @@ go run ./cmd/releaseverify \
   -evidence-root "${EVIDENCE_DIR#"$ROOT"/}" \
   -manifest release-evidence.json \
   -evaluation-time '2026-07-21T12:01:00Z' \
-  -cosign "$FAKE_COSIGN" \
   -output "$DECISION_DIR/time-mismatch.json" >/dev/null 2>&1
 time_status=$?
 set -e
