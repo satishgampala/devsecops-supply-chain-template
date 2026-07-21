@@ -1,6 +1,7 @@
 # Build output
 /bin/
 /reports/
+/dist/
 
 # Test and coverage output
 /coverage*
