@@ -79,7 +79,7 @@
 
 **Files:**
 
-- Create: `.github/workflows/release.yml`
+- Update: `.github/workflows/signing.yml`
 - Create: `scripts/collect-release-evidence.sh`
 
 - [ ] Build tests, scanner reports, OCI, SPDX, and provenance without OIDC.
