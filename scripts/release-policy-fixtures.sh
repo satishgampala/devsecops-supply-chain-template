@@ -148,6 +148,7 @@ if [ "$signature_status" -eq 0 ] || ! jq --exit-status '.reasonCodes | index("SI
   printf '%s\n' 'signature-invalid fixture failed incorrectly' >&2
   exit 1
 fi
+unset FAKE_COSIGN_FAIL
 
 mv "$EVIDENCE_DIR/image.spdx.raw.json" "$EVIDENCE_DIR/image.spdx.raw.json.hold"
 expect_failure missing-sbom SBOM_MISSING verify_release "$DECISION_DIR/missing-sbom.json"
