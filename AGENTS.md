@@ -3,6 +3,14 @@
 This file defines the rules for human-led and agent-assisted work in this repository.
 The roadmap and milestone implementation plans remain the technical source of truth.
 
+## Communication protocol
+
+- Use full token-efficient communication for all progress updates, plans, reviews, research summaries, and handoffs.
+- Remove filler, repeated summaries, decorative formatting, and routine tool narration while preserving technical substance, evidence, paths, commands, and exact errors.
+- Use normal clear prose for security warnings, destructive actions, ambiguous ordering, or any case where compression could cause a mistake.
+- Keep source code, configuration, repository documentation, commit messages, and pull-request content conventional and professional.
+- Keep this protocol active until the repository owner explicitly requests normal mode.
+
 ## Project scope
 
 - Keep the reference service deliberately small so delivery controls remain visible.
