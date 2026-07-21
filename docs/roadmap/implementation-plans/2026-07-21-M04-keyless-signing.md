@@ -74,11 +74,11 @@
 **Files:**
 
 - Create: `.github/workflows/signing.yml`
-- Create: `scripts/write-signing-observation.sh`
+- Create: `scripts/signing-policy-fixtures.sh`
 - Update: `Makefile`
 
 - [ ] Build M03 evidence in a read-only job with no OIDC permission.
-- [ ] Transfer a bounded artifact to a signing job that never checks out or executes repository code.
+- [ ] Transfer a bounded artifact to a signing job that never checks out or executes transferred repository programs or scripts.
 - [ ] Grant `id-token: write` only to the signing job and gate it to protected default-branch context.
 - [ ] Keylessly sign the OCI archive, raw SPDX SBOM, and local provenance with Cosign 3.1.2.
 - [ ] Verify each bundle immediately using all exact certificate and GitHub workflow flags.
