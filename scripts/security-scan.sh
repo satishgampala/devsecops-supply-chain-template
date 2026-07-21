@@ -120,7 +120,7 @@ run_file_scan \
   "$REPORT_DIR/raw/gitleaks.sarif" "$REPORT_DIR/normalized/gitleaks.json" \
   docker run --rm --user "$uid:$gid" \
     --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" \
-    "$GITLEAKS_IMAGE" dir /src \
+    "$GITLEAKS_IMAGE" git /src \
     --config /src/.gitleaks.toml --redact=100 --no-banner --no-color \
     --report-format sarif --report-path /reports/raw/gitleaks.sarif --exit-code 1
 
