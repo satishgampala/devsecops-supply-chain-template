@@ -1,8 +1,8 @@
 # M02 - Source, Dependency, IaC, and Container Scanning
 
-- **Status:** Not Started
+- **Status:** Implemented Locally
 - **Depends on:** M01
-- **Implementation plan:** Not written; planned after the dependency milestone.
+- **Implementation plan:** [2026-07-21 M02 Security Scanning](../implementation-plans/2026-07-21-M02-security-scanning.md)
 
 ## Outcome
 
@@ -20,22 +20,22 @@ This milestone covers code, dependency, secret, IaC, container, and license scan
 
 ## Tasks and subtasks
 
-- [ ] **T1: Define finding policy and ownership.**
-  - [ ] Define blocking severities, allowed reasons, exception owner, expiry, and review cadence.
-  - [ ] Distinguish tool failure, database failure, no findings, and accepted findings.
-  - [ ] Require scanner name, rule, artifact, location, severity, and remediation in normalized summaries.
-- [ ] **T2: Add source and secret scanning.**
-  - [ ] Configure CodeQL or Semgrep for the selected language.
-  - [ ] Add a secret scanner with a safe synthetic canary used only in an isolated negative test fixture.
-  - [ ] Verify ignored paths are narrow and documented.
-- [ ] **T3: Add dependency and license checks.**
-  - [ ] Scan application and build dependencies against current advisories.
-  - [ ] Enforce the approved license policy with explicit exceptions.
-  - [ ] Prove a seeded vulnerable dependency produces the expected failure.
-- [ ] **T4: Add IaC and container checks.**
-  - [ ] Scan workflow, Dockerfile, and any deployment example with Checkov or equivalent controls.
-  - [ ] Use Trivy for container vulnerabilities, misconfiguration, and secrets.
-  - [ ] Prove seeded Dockerfile and image defects fail before release.
+- [x] **T1: Define finding policy and ownership.**
+  - [x] Define blocking severities, allowed reasons, exception owner, expiry, and review cadence.
+  - [x] Distinguish tool failure, database failure, no findings, and accepted findings.
+  - [x] Require scanner name, rule, artifact, location, severity, and remediation in normalized summaries.
+- [x] **T2: Add source and secret scanning.**
+  - [x] Configure CodeQL and Gosec for Go source analysis.
+  - [x] Add a secret scanner with a safe synthetic canary used only in an isolated negative test fixture.
+  - [x] Verify ignored paths are narrow and documented.
+- [x] **T3: Add dependency and license checks.**
+  - [x] Scan application and build dependencies against current advisories.
+  - [x] Enforce the approved license policy with explicit exceptions.
+  - [x] Prove a seeded vulnerable dependency produces the expected failure.
+- [x] **T4: Add IaC and container checks.**
+  - [x] Scan workflows and Dockerfiles with dedicated workflow and misconfiguration controls.
+  - [x] Use Trivy for container vulnerabilities, misconfiguration, and licenses.
+  - [x] Prove seeded Dockerfile and image defects fail before release.
 
 ## Verification and evidence
 
@@ -45,10 +45,11 @@ This milestone covers code, dependency, secret, IaC, container, and license scan
 
 ## Exit criteria
 
-- [ ] Clean source, dependencies, IaC, and container satisfy the documented gate.
-- [ ] Each scanner has at least one safe negative test that proves the gate can fail.
-- [ ] Exceptions require owner, reason, scope, and expiry.
-- [ ] Reports preserve scanner provenance and are available as CI artifacts.
+- [x] Clean source, dependencies, IaC, and container satisfy the documented local gate.
+- [x] Each locally executable scanner has a safe negative test that proves the gate can fail.
+- [x] Exceptions require owner, reason, scope, and expiry.
+- [x] Workflow configuration retains native and normalized reports as CI artifacts.
+- [ ] CodeQL and the complete scanner workflow have passed on GitHub-hosted infrastructure.
 
 ## Risks and controls
 

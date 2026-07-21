@@ -27,13 +27,13 @@ Create a reusable public-repository template that takes a small service from sou
 | ID | Milestone | Status | Depends on | Exit outcome |
 | --- | --- | --- | --- | --- |
 | M01 | [Reference service and pipeline baseline](milestones/M01-pipeline-baseline.md) | In Progress | None | A minimal service builds and tests reproducibly with a hardened CI foundation. |
-| M02 | [Source, dependency, IaC, and container scanning](milestones/M02-security-scanning.md) | Not Started | M01 | Security checks detect seeded defects and enforce documented severity policy. |
+| M02 | [Source, dependency, IaC, and container scanning](milestones/M02-security-scanning.md) | Implemented Locally | M01 | Security checks detect seeded defects and enforce documented severity policy. |
 | M03 | [SBOM and SLSA provenance](milestones/M03-sbom-provenance.md) | Not Started | M02 | Every release artifact has verifiable component inventory and build provenance. |
 | M04 | [Keyless signing and identity verification](milestones/M04-signing.md) | Not Started | M03 | Artifacts are signed and verification binds them to the expected workflow identity. |
 | M05 | [Release policy and deployment eligibility](milestones/M05-release-policy.md) | Not Started | M04 | A single verifier produces an evidence-backed eligible or ineligible decision. |
 | M06 | [Reusable template, demonstration, and release](milestones/M06-template-release.md) | Not Started | M05 | Another repository can adopt the template and reproduce the complete secure release. |
 
-M02–M06 describe planned work. Their outcomes are not current repository capabilities.
+M02 is implemented and verified locally; its GitHub-hosted execution remains pending. M03–M06 describe planned work and are not current repository capabilities.
 
 ## Project completion gate
 

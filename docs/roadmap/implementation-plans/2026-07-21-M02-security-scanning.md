@@ -71,11 +71,11 @@ Stable M02 reason codes are:
 - Create: `internal/securityreport/policy.go`
 - Create: `internal/securityreport/policy_test.go`
 
-- [ ] Define required scanner names and the blocking threshold.
-- [ ] Define approved and prohibited SPDX license identifiers.
-- [ ] Parse exceptions strictly and reject unknown fields, empty ownership fields, broad scopes, malformed dates, and duplicate IDs.
-- [ ] Evaluate expiry against an injected clock so tests remain deterministic.
-- [ ] Sort all findings and reason codes before serialization.
+- [x] Define required scanner names and the blocking threshold.
+- [x] Define approved and prohibited SPDX license identifiers.
+- [x] Parse exceptions strictly and reject unknown fields, empty ownership fields, broad scopes, malformed dates, and duplicate IDs.
+- [x] Evaluate expiry against an injected clock so tests remain deterministic.
+- [x] Sort all findings and reason codes before serialization.
 
 ## Task 2: Normalize SARIF without losing provenance
 
@@ -88,11 +88,11 @@ Stable M02 reason codes are:
 - Create: `testdata/security/sarif/blocking.sarif`
 - Create: `testdata/security/sarif/malformed.sarif`
 
-- [ ] Parse the SARIF 2.1.0 fields emitted by the selected scanners.
-- [ ] Resolve result severity from `level`, security-severity properties, and rule metadata in a documented order.
-- [ ] Preserve rule identifier, artifact URI, start line, message, help URI/remediation, scanner name, and scanner reference.
-- [ ] Fail closed on malformed or unsupported input.
-- [ ] Prove byte-stable normalized output for identical input.
+- [x] Parse the SARIF 2.1.0 fields emitted by the selected scanners.
+- [x] Resolve result severity from `level`, security-severity properties, tags, and rule metadata in a documented order.
+- [x] Preserve rule identifier, artifact URI, start line, message, help URI/remediation, scanner name, and scanner reference.
+- [x] Fail closed on malformed or unsupported input.
+- [x] Prove byte-stable normalized output for identical input.
 
 ## Task 3: Enforce the aggregate security gate
 
@@ -103,11 +103,11 @@ Stable M02 reason codes are:
 - Create: `internal/securityreport/gate_test.go`
 - Create: `testdata/security/reports/**`
 
-- [ ] Accept an explicit policy path, report paths, evaluation time, and output path.
-- [ ] Reject missing required scanners, duplicate scanner reports, malformed reports, tool failure, blocking severity, prohibited license, and invalid or expired exceptions.
-- [ ] Accept only exact, unexpired exceptions and include their IDs in the result.
-- [ ] Add deterministic clean, blocking, scanner-failure, missing-scanner, prohibited-license, accepted-exception, and expired-exception cases.
-- [ ] Verify every reason code and exit status.
+- [x] Accept an explicit policy path, report paths, evaluation time, and output path.
+- [x] Reject missing required scanners, duplicate scanner reports, malformed reports, tool failure, blocking severity, prohibited license, and invalid or expired exceptions.
+- [x] Accept only exact, unexpired exceptions and include their IDs in the result.
+- [x] Add deterministic clean, blocking, scanner-failure, missing-scanner, prohibited-license, accepted-exception, and expired-exception cases.
+- [x] Verify every reason code and exit status.
 
 ## Task 4: Add live scanner orchestration and safe fixtures
 
@@ -121,12 +121,12 @@ Stable M02 reason codes are:
 - Update: `.gitignore`
 - Update: `Makefile`
 
-- [ ] Run Gitleaks, OSV-Scanner, and Trivy through digest-pinned containers with a read-only source mount and a writable report directory only.
-- [ ] Build and scan the local application image without registry credentials.
-- [ ] Record each scanner's immutable reference and execution state even when it exits nonzero.
-- [ ] Add an isolated public synthetic-secret fixture, a known-vulnerable dependency fixture, and an intentionally insecure Dockerfile fixture.
-- [ ] Add `make security-test`, `make security-scan`, and `make security-fixtures` targets.
-- [ ] Confirm the clean repository passes and every seeded fixture fails for its expected scanner/rule.
+- [x] Run Gosec, Gitleaks, zizmor, OSV-Scanner, and Trivy through digest-pinned containers with a read-only source mount and a writable report directory only.
+- [x] Build and scan the local application image without registry credentials.
+- [x] Record each scanner's immutable reference and execution state even when it exits nonzero.
+- [x] Add isolated source, secret, dependency, workflow, Dockerfile, image, and license fixtures.
+- [x] Add `make security-test`, `make security-scan`, and `make security-fixtures` targets.
+- [x] Confirm the clean repository passes and every seeded fixture fails for its expected scanner/rule.
 
 ## Task 5: Add least-privilege hosted scanning
 
@@ -135,12 +135,12 @@ Stable M02 reason codes are:
 - Create: `.github/workflows/security.yml`
 - Update: `.github/dependabot.yml`
 
-- [ ] Run CodeQL for Go with manual build steps and `security-extended` queries.
-- [ ] Run the digest-pinned scanner orchestration for source and image checks.
-- [ ] Normalize scanner outputs and apply the aggregate policy gate.
-- [ ] Upload native and normalized reports with a bounded retention period even when the gate fails.
-- [ ] Give only the CodeQL upload job `security-events: write`; keep all other jobs at `contents: read`.
-- [ ] Avoid privileged pull-request triggers, mutable action references, untrusted expression interpolation in shell, and credential persistence.
+- [x] Configure CodeQL for Go with manual build steps and `security-extended` queries.
+- [x] Configure digest-pinned scanner orchestration for source and image checks.
+- [x] Normalize scanner outputs and apply the aggregate policy gate.
+- [x] Upload native and normalized reports with a bounded retention period even when the gate fails.
+- [x] Give only CodeQL `security-events: write`; keep all other jobs at `contents: read`.
+- [x] Avoid privileged pull-request triggers, mutable action references, untrusted expression interpolation in shell, and credential persistence.
 
 ## Task 6: Verify and document M02
 
@@ -154,11 +154,11 @@ Stable M02 reason codes are:
 - Create: `docs/security/scanning.md`
 - Create: `docs/roadmap/evidence/M02/verification.md`
 
-- [ ] Run unit, race, formatting, vet, actionlint, container, and live clean scan checks.
-- [ ] Run every isolated negative fixture and record its expected nonzero result without committing generated reports.
-- [ ] Verify action pins, workflow permissions, safe expression use, local links, and tracked-file secret patterns.
-- [ ] Document policy interpretation, exception review, report locations, scanner database variability, and local commands.
-- [ ] Mark local M02 implementation complete while keeping GitHub-hosted execution explicitly pending.
+- [x] Run unit, race, formatting, vet, actionlint, container, and live clean scan checks.
+- [x] Run every isolated negative fixture and record its expected nonzero result without committing generated reports.
+- [x] Verify action pins, workflow permissions, safe expression use, local links, and tracked-file secret patterns.
+- [x] Document policy interpretation, exception review, report locations, scanner database variability, and local commands.
+- [x] Mark local M02 implementation complete while keeping GitHub-hosted execution explicitly pending.
 
 ## Completion gate
 
