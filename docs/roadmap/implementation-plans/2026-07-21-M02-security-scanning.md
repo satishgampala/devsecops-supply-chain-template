@@ -6,7 +6,7 @@
 
 **Architecture:** GitHub Actions runs CodeQL and digest-pinned scanner containers against the checked-out source and locally built image. Scanner-native SARIF remains available for inspection while a small Go normalizer converts results into a stable repository-owned contract. A separate gate evaluates required scanner state, finding severity, license policy, and time-bounded exceptions. Isolated fixtures prove both clean and expected-failure paths without placing usable credentials in the repository.
 
-**Tech stack:** Go 1.26.5, GitHub CodeQL, Gitleaks 8.30.1, OSV-Scanner 2.4.0, Trivy 0.72.0, SARIF 2.1.0, Docker, GitHub Actions.
+**Tech stack:** Go 1.26.5, GitHub CodeQL, Gosec 2.28.0, govulncheck 1.6.0, Gitleaks 8.30.1, zizmor 1.27.0, OSV-Scanner 2.4.0, Trivy 0.72.0, SARIF 2.1.0, Docker, GitHub Actions.
 
 ## Global constraints
 
@@ -25,7 +25,10 @@
 | Tool | Reference |
 | --- | --- |
 | CodeQL Action | `7188fc363630916deb702c7fdcf4e481b751f97a` (`codeql-bundle-v2.26.1`) |
+| Gosec | `ghcr.io/securego/gosec@sha256:4342ad119a7c69f3f4e4ce78d81ba183dc774a70a7a4c6eeb15fe9e511f214f0` (`v2.28.0`) |
+| govulncheck | `golang.org/x/vuln/cmd/govulncheck@v1.6.0` |
 | Gitleaks | `ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f` (`v8.30.1`) |
+| zizmor | `ghcr.io/zizmorcore/zizmor@sha256:5800c8d5e83263d68a8874989b0eb3939e177540e9395de48158d24656141ee9` (`v1.27.0`) |
 | OSV-Scanner | `ghcr.io/google/osv-scanner@sha256:5116601dedc01c1c580eb92371883ec052fc4c13c3fbc109d621a63ac416d475` (`v2.4.0`) |
 | Trivy | `docker.io/aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f` (`v0.72.0`) |
 | Artifact upload | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` (`v7.0.1`) |
