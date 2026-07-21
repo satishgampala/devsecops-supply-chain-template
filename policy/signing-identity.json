@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "certificateIdentity": "https://github.com/satishgampala/devsecops-supply-chain-template/.github/workflows/signing.yml@refs/heads/main",
+  "repository": "satishgampala/devsecops-supply-chain-template",
+  "workflowName": "Signing",
+  "workflowRef": "refs/heads/main",
+  "allowedTriggers": [
+    "push",
+    "workflow_dispatch"
+  ],
+  "requiredArtifacts": [
+    {
+      "role": "local-provenance",
+      "path": "provenance.local.json",
+      "bundle": "provenance.local.sigstore.json"
+    },
+    {
+      "role": "oci-archive",
+      "path": "image.oci.tar",
+      "bundle": "image.oci.sigstore.json"
+    },
+    {
+      "role": "spdx-sbom",
+      "path": "image.spdx.raw.json",
+      "bundle": "image.spdx.sigstore.json"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "certificateIdentity": "https://github.com/satishgampala/devsecops-supply-chain-template/.github/workflows/signing.yml@refs/heads/main",
+  "repository": "satishgampala/devsecops-supply-chain-template",
+  "workflowName": "Signing",
+  "workflowRef": "refs/heads/main",
+  "workflowSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "workflowTrigger": "push",
+  "cryptographicVerification": true,
+  "transparencyLogVerified": true,
+  "embeddedSCTVerified": true,
+  "artifacts": [
+    {
+      "role": "local-provenance",
+      "path": "provenance.local.json",
+      "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "bundle": "provenance.local.sigstore.json",
+      "bundleSHA256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "verified": true
+    },
+    {
+      "role": "oci-archive",
+      "path": "image.oci.tar",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "bundle": "image.oci.sigstore.json",
+      "bundleSHA256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "verified": true
+    },
+    {
+      "role": "spdx-sbom",
+      "path": "image.spdx.raw.json",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bundle": "image.spdx.sigstore.json",
+      "bundleSHA256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "verified": true
+    }
+  ]
+}
