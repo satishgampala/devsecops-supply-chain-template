@@ -11,6 +11,10 @@ updates:
       default-days: 7
     open-pull-requests-limit: 5
     groups:
+      go-security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
       go-minor-and-patch:
         update-types:
           - minor
@@ -29,6 +33,10 @@ updates:
       default-days: 7
     open-pull-requests-limit: 5
     groups:
+      docker-security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
       docker-minor-and-patch:
         update-types:
           - minor
@@ -47,6 +55,10 @@ updates:
       default-days: 7
     open-pull-requests-limit: 5
     groups:
+      actions-security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
       actions-minor-and-patch:
         update-types:
           - minor

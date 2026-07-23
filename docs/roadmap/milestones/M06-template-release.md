@@ -1,12 +1,12 @@
 # M06 - Reusable Template, Demonstration, and Release
 
-- **Status:** Not Started
+- **Status:** Implemented Locally
 - **Depends on:** M05
-- **Implementation plan:** Not written; planned after the dependency milestone.
+- **Implementation plan:** [2026-07-23 M06 Reusable Template and Release Operations](../implementation-plans/2026-07-23-M06-template-release.md)
 
 ## Outcome
 
-The secure workflow is packaged as a documented template, adopted by a clean consumer example, demonstrated publicly, and published as a versioned release.
+The secure workflow is packaged as a documented template, adopted by a detached clean consumer, and covered by reproducible local evidence. Hosted execution and versioned publication remain pending.
 
 ## Scope and non-goals
 
@@ -14,39 +14,40 @@ This milestone focuses on reuse, documentation, adoption testing, release eviden
 
 ## Deliverables
 
-- Secure-by-default reusable workflow with explicit interfaces and permissions.
-- Clean consumer adoption and seeded-failure integration test.
-- Complete documentation, public demonstration, and versioned release evidence.
+- [x] Secure-by-default reusable workflow with explicit interfaces and permissions.
+- [x] Clean-consumer adoption and seeded-failure integration test.
+- [x] Complete architecture, security, operations, adoption, and walkthrough documentation.
+- [ ] Hosted Scorecard, signed evidence, immutable tag, and versioned release.
 
 ## Tasks and subtasks
 
-- [ ] **T1: Extract reusable workflow boundaries.**
-  - [ ] Separate service-specific tests from reusable scanning, evidence, signing, and verification jobs.
-  - [ ] Define explicit inputs, outputs, permissions, secrets, and supported artifact types.
-  - [ ] Keep secure defaults mandatory and document every opt-out.
-- [ ] **T2: Build a clean consumer adoption test.**
-  - [ ] Create a minimal consumer repository or fixture with no hidden local state.
-  - [ ] Adopt the template using only documented inputs.
-  - [ ] Verify clean release and seeded-failure behavior in the consumer context.
-- [ ] **T3: Complete documentation and operations.**
-  - [ ] Publish architecture, threat model, trust boundaries, quick start, workflow reference, exception process, troubleshooting, and update strategy.
-  - [ ] Add security policy, license, contribution guide, dependency automation, and release runbook.
-  - [ ] Map controls to relevant NIST SSDF and SLSA concepts without claiming certification.
+- [x] **T1: Extract reusable workflow boundaries.**
+  - [x] Expose the mandatory Make contract through a reusable validation workflow.
+  - [x] Define explicit outputs and grant no inputs, secrets, write permissions, or OIDC.
+  - [x] Keep secure defaults mandatory and document the repository-specific signing boundary.
+- [x] **T2: Build a clean-consumer adoption test.**
+  - [x] Create a detached consumer fixture with no hidden repository or credential state.
+  - [x] Initialize the template using only documented identity inputs.
+  - [x] Verify clean local gates and seeded-failure behavior in the consumer context.
+- [x] **T3: Complete documentation and operations.**
+  - [x] Publish architecture, threat model, trust boundaries, quick start, workflow reference, exception process, troubleshooting, and update strategy.
+  - [x] Add security policy, license, contribution guide, dependency automation, Scorecard workflow, and release runbook.
+  - [x] Map controls to relevant NIST SSDF and SLSA concepts without claiming certification.
 - [ ] **T4: Demonstrate and release.**
-  - [ ] Record a concise flow from source change to signed eligible artifact, including one failed release.
-  - [ ] Run OpenSSF Scorecard and address material repository-hygiene findings.
+  - [x] Record a concise flow from source change to locally eligible synthetic evidence, including one failed release.
+  - [ ] Run OpenSSF Scorecard on the hosted repository and address material findings.
   - [ ] Publish a versioned release with sample SBOM, provenance, signature verification, eligibility decision, and release notes.
 
 ## Verification and evidence
 
-- From a clean consumer, run tests, scans, build, SBOM, provenance, signing, and release verification with no private infrastructure.
-- Retain consumer commit, workflow run URLs, Scorecard result, release artifacts, verification output, demo recording, and release URL under `docs/roadmap/evidence/M06/`.
+- [Local M06 verification evidence](../evidence/M06/verification.md) records initialization, clean-consumer, host, container, scanner, integrity, policy, workflow, documentation, and negative gates.
+- Hosted workflow URLs, Scorecard results, real signing bundles, release artifacts, an immutable tag, and a release URL remain pending.
 
 ## Exit criteria
 
-- [ ] A clean consumer adopts the workflow using documented configuration only.
-- [ ] Positive and seeded-negative consumer runs behave as specified.
-- [ ] Documentation explains permissions, trust boundaries, limitations, and updates.
+- [x] A detached clean consumer adopts the repository using documented initialization inputs.
+- [x] Positive and seeded-negative consumer runs behave as specified.
+- [x] Documentation explains permissions, trust boundaries, limitations, and updates.
 - [ ] A versioned release and independently reproducible release evidence exist.
 
 ## Risks and controls

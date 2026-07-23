@@ -1,6 +1,6 @@
 # M01 - Reference Service and Pipeline Baseline
 
-- **Status:** In Progress
+- **Status:** Implemented Locally
 - **Depends on:** None
 - **Implementation plan:** [2026-07-21 M01 Pipeline Baseline](../implementation-plans/2026-07-21-M01-pipeline-baseline.md)
 
@@ -48,7 +48,7 @@ This milestone establishes source, tests, container build, CI permissions, and w
 - [x] The container runs as non-root and passes its health check.
 - [x] Pull-request workflows have read-only permissions unless a documented check requires more.
 - [x] Third-party actions and base images are immutably pinned.
-- [ ] The workflow passes on a GitHub-hosted pull-request run and the run is recorded as evidence.
+- [ ] The workflow passes on a GitHub-hosted pull-request run and the run is recorded as remote evidence.
 
 ## Risks and controls
 

@@ -1,0 +1,43 @@
+# Contributing
+
+Contributions that improve the reference service, supply-chain controls, evidence verification, tests, or documentation are welcome.
+
+## Before changing code
+
+- Read [SECURITY.md](SECURITY.md) for private vulnerability reporting.
+- Keep the service small so the delivery controls remain inspectable.
+- Open an issue before a broad interface, policy, workflow-permission, evidence-schema, or dependency change.
+- Do not include credentials, private data, generated local evidence, or unrelated formatting changes.
+
+## Local development
+
+Required tools are listed in the [README](README.md). Run the smallest relevant check while developing, then run:
+
+```sh
+make verify
+make container-build
+make container-smoke
+make security-fixtures
+make security-scan
+make integrity-repro
+make signing-test
+make release-policy-test
+make template-test
+```
+
+Also run Actionlint and the digest-pinned zizmor command documented in the current milestone evidence when changing any workflow.
+
+## Change expectations
+
+- Add tests for new behavior and negative tests for validation or policy changes.
+- Keep schemas strict, bounded, and versioned.
+- Pin containers and Actions to immutable digests or full commit SHAs.
+- Grant GitHub token and OIDC permissions only to the job that requires them.
+- Update architecture, security, reference, and operations documentation when their contracts change.
+- Do not weaken a scanner, signature, provenance, or digest failure to make a check pass.
+
+## Pull requests
+
+Describe the problem, security impact, implementation, verification commands, and remaining limitations. Keep each change reviewable and focused. A maintainer may request a threat-model or policy update for changes that introduce a new trust boundary.
+
+By submitting a contribution, you agree that it is licensed under the Apache License 2.0.

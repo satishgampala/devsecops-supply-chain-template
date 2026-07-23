@@ -43,4 +43,4 @@ The static service binary is reproducible under the documented build flags. The 
 
 ## Remaining remote gate
 
-The branch has not been pushed and no pull request exists, so there is no GitHub-hosted workflow run to cite. M01 remains **In Progress** until the workflow passes on GitHub and its run URL and commit SHA are appended here. M02 through M06 controls are planned and are not represented by this evidence.
+The branch has not been pushed and no pull request exists, so there is no GitHub-hosted workflow run to cite. M01 is **Implemented Locally**; remote verification remains pending until the workflow passes on GitHub and its run URL and commit SHA are appended here. Later milestone evidence is recorded in its corresponding evidence directory.
