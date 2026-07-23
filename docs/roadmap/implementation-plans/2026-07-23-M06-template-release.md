@@ -97,10 +97,10 @@
 - Create: `docs/compliance/control-mapping.md`
 - Create: `docs/demo/release-walkthrough.md`
 
-- [ ] Refresh C4 context and container views for runtime, validation, signing, policy, registry, and consumer boundaries.
-- [ ] Model runtime and CI/build threats separately with concrete path evidence, attacker capabilities, abuse paths, mitigations, and residual risk.
-- [ ] Map implemented controls to NIST SSDF 1.1 practices and SLSA 1.2 concepts without claiming certification or a SLSA level.
-- [ ] Provide one successful local evidence flow and one rejected-tamper flow.
+- [x] Refresh C4 context and container views for runtime, validation, signing, policy, registry, and consumer boundaries.
+- [x] Model runtime and CI/build threats separately with concrete path evidence, attacker capabilities, abuse paths, mitigations, and residual risk.
+- [x] Map implemented controls to NIST SSDF 1.1 practices and SLSA 1.2 concepts without claiming certification or a SLSA level.
+- [x] Provide one successful local evidence flow and one rejected-tamper flow.
 
 ## Task 5: Verify and document M06
 
