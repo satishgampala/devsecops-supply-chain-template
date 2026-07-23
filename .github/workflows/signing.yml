@@ -1,0 +1,221 @@
+name: Signing
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build verified evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: 1.26.5
+          check-latest: false
+          cache: false
+
+      - name: Generate verified integrity evidence
+        run: make integrity
+
+      - name: Transfer unsigned evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unsigned-evidence-${{ github.run_id }}
+          path: |
+            dist/image.oci.tar
+            dist/image.spdx.raw.json
+            dist/image.spdx.canonical.json
+            dist/provenance.local.json
+            dist/verification.json
+            dist/tooling.json
+            dist/checksums.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  sign:
+    name: Keyless sign and verify
+    needs: build
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      id-token: write
+    steps:
+      - name: Download unsigned evidence
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: unsigned-evidence-${{ github.run_id }}
+          path: dist
+
+      - name: Verify transferred checksums
+        working-directory: dist
+        run: shasum -a 256 --check checksums.sha256
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.2
+
+      - name: Keylessly sign evidence
+        run: |
+          cosign sign-blob --yes --bundle dist/image.oci.sigstore.json dist/image.oci.tar
+          cosign sign-blob --yes --bundle dist/image.spdx.sigstore.json dist/image.spdx.raw.json
+          cosign sign-blob --yes --bundle dist/provenance.local.sigstore.json dist/provenance.local.json
+
+      - name: Verify cryptography and exact workflow identity
+        env:
+          CERTIFICATE_IDENTITY: https://github.com/satishgampala/devsecops-supply-chain-template/.github/workflows/signing.yml@refs/heads/main
+          OIDC_ISSUER: https://token.actions.githubusercontent.com
+          WORKFLOW_NAME: Signing
+          WORKFLOW_REF: ${{ github.ref }}
+          WORKFLOW_REPOSITORY: ${{ github.repository }}
+          WORKFLOW_SHA: ${{ github.sha }}
+          WORKFLOW_TRIGGER: ${{ github.event_name }}
+        run: |
+          verify_bundle() {
+            artifact=$1
+            bundle=$2
+            cosign verify-blob \
+              --bundle "$bundle" \
+              --certificate-identity "$CERTIFICATE_IDENTITY" \
+              --certificate-oidc-issuer "$OIDC_ISSUER" \
+              --certificate-github-workflow-name "$WORKFLOW_NAME" \
+              --certificate-github-workflow-repository "$WORKFLOW_REPOSITORY" \
+              --certificate-github-workflow-ref "$WORKFLOW_REF" \
+              --certificate-github-workflow-sha "$WORKFLOW_SHA" \
+              --certificate-github-workflow-trigger "$WORKFLOW_TRIGGER" \
+              "$artifact"
+          }
+          verify_bundle dist/image.oci.tar dist/image.oci.sigstore.json
+          verify_bundle dist/image.spdx.raw.json dist/image.spdx.sigstore.json
+          verify_bundle dist/provenance.local.json dist/provenance.local.sigstore.json
+
+      - name: Record verified signing observation
+        env:
+          CERTIFICATE_IDENTITY: https://github.com/satishgampala/devsecops-supply-chain-template/.github/workflows/signing.yml@refs/heads/main
+          OIDC_ISSUER: https://token.actions.githubusercontent.com
+          WORKFLOW_NAME: Signing
+          WORKFLOW_REF: ${{ github.ref }}
+          WORKFLOW_REPOSITORY: ${{ github.repository }}
+          WORKFLOW_SHA: ${{ github.sha }}
+          WORKFLOW_TRIGGER: ${{ github.event_name }}
+        run: |
+          printf '%s' "$WORKFLOW_SHA" | grep --extended-regexp --quiet '^[0-9a-f]{40}$'
+          case "$WORKFLOW_TRIGGER" in push|workflow_dispatch) ;; *) exit 1 ;; esac
+          hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
+          jq --null-input \
+            --arg issuer "$OIDC_ISSUER" \
+            --arg identity "$CERTIFICATE_IDENTITY" \
+            --arg repository "$WORKFLOW_REPOSITORY" \
+            --arg workflow "$WORKFLOW_NAME" \
+            --arg ref "$WORKFLOW_REF" \
+            --arg sha "$WORKFLOW_SHA" \
+            --arg trigger "$WORKFLOW_TRIGGER" \
+            --arg archive "$(hash_file dist/image.oci.tar)" \
+            --arg archiveBundle "$(hash_file dist/image.oci.sigstore.json)" \
+            --arg sbom "$(hash_file dist/image.spdx.raw.json)" \
+            --arg sbomBundle "$(hash_file dist/image.spdx.sigstore.json)" \
+            --arg provenance "$(hash_file dist/provenance.local.json)" \
+            --arg provenanceBundle "$(hash_file dist/provenance.local.sigstore.json)" \
+            '{
+              schemaVersion: "1.0",
+              issuer: $issuer,
+              certificateIdentity: $identity,
+              repository: $repository,
+              workflowName: $workflow,
+              workflowRef: $ref,
+              workflowSHA: $sha,
+              workflowTrigger: $trigger,
+              cryptographicVerification: true,
+              transparencyLogVerified: true,
+              embeddedSCTVerified: true,
+              artifacts: [
+                {role: "local-provenance", path: "provenance.local.json", sha256: $provenance, bundle: "provenance.local.sigstore.json", bundleSHA256: $provenanceBundle, verified: true},
+                {role: "oci-archive", path: "image.oci.tar", sha256: $archive, bundle: "image.oci.sigstore.json", bundleSHA256: $archiveBundle, verified: true},
+                {role: "spdx-sbom", path: "image.spdx.raw.json", sha256: $sbom, bundle: "image.spdx.sigstore.json", bundleSHA256: $sbomBundle, verified: true}
+              ]
+            }' >dist/signing-observation.json
+
+      - name: Preserve signed evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: signed-evidence-${{ github.run_id }}
+          path: |
+            dist/image.oci.tar
+            dist/image.spdx.raw.json
+            dist/image.spdx.canonical.json
+            dist/provenance.local.json
+            dist/verification.json
+            dist/tooling.json
+            dist/checksums.sha256
+            dist/image.oci.sigstore.json
+            dist/image.spdx.sigstore.json
+            dist/provenance.local.sigstore.json
+            dist/signing-observation.json
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14
+
+  policy:
+    name: Evaluate signing policy
+    needs: sign
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Check out policy verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: 1.26.5
+          check-latest: false
+          cache: false
+
+      - name: Download signed evidence
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: signed-evidence-${{ github.run_id }}
+          path: dist
+
+      - name: Evaluate exact identity policy
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          go run ./cmd/signing-policy \
+            -policy policy/signing-identity.json \
+            -observation dist/signing-observation.json \
+            -expected-sha "$EXPECTED_SHA" \
+            -output dist/signing-decision.json
+
+      - name: Retain signing decision
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: signing-decision-${{ github.run_id }}
+          path: dist/signing-decision.json
+          if-no-files-found: error
+          retention-days: 14

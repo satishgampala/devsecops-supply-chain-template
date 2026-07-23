@@ -1,8 +1,8 @@
 # M04 - Keyless Signing and Identity Verification
 
-- **Status:** Not Started
+- **Status:** Implemented Locally
 - **Depends on:** M03
-- **Implementation plan:** Not written; planned after the dependency milestone.
+- **Implementation plan:** [2026-07-21 M04 Keyless Signing](../implementation-plans/2026-07-21-M04-keyless-signing.md)
 
 ## Outcome
 
@@ -20,22 +20,22 @@ This milestone signs and verifies artifacts and attestations. It does not introd
 
 ## Tasks and subtasks
 
-- [ ] **T1: Define the signing identity policy.**
-  - [ ] Specify allowed OIDC issuer, repository, workflow path, branch or tag context, and subject digest.
-  - [ ] Separate pull-request build identity from protected release identity.
-  - [ ] Document transparency-log expectations and offline-verification limitations.
-- [ ] **T2: Implement keyless signing.**
-  - [ ] Grant OIDC token permission only to the protected signing job.
-  - [ ] Sign the immutable artifact digest after all prerequisite checks succeed.
-  - [ ] Sign or attest SBOM and provenance associations as required by the selected release format.
-- [ ] **T3: Implement strict verification.**
-  - [ ] Verify signature cryptography, issuer, subject identity, repository, workflow, and digest.
-  - [ ] Fail closed on missing identity constraints or unavailable required evidence.
-  - [ ] Produce human-readable and machine-readable verification summaries.
-- [ ] **T4: Test signing failures.**
-  - [ ] Verify unsigned artifacts fail.
-  - [ ] Verify modified artifacts and signatures from an unapproved identity fail.
-  - [ ] Verify protected release identity cannot be obtained in an untrusted pull-request job.
+- [x] **T1: Define the signing identity policy.**
+  - [x] Specify allowed OIDC issuer, repository, workflow path, protected branch context, source SHA, and artifact digests.
+  - [x] Separate pull-request build identity from protected release identity.
+  - [x] Document transparency-log expectations and offline-verification limitations.
+- [x] **T2: Implement keyless signing.**
+  - [x] Grant OIDC token permission only to the protected signing job.
+  - [x] Configure signing of immutable evidence after prerequisite checks succeed.
+  - [x] Configure signing of the raw SPDX document and local provenance beside the OCI archive.
+- [x] **T3: Implement strict verification.**
+  - [x] Require signature cryptography, issuer, subject identity, repository, workflow, and digest verification.
+  - [x] Fail closed on missing identity constraints or unavailable required evidence.
+  - [x] Produce machine-readable verification observations and policy decisions.
+- [x] **T4: Test signing failures.**
+  - [x] Verify an unsigned observation fails.
+  - [x] Verify modified digest and unapproved identity observations fail.
+  - [x] Verify pull-request context cannot satisfy protected signing policy.
 
 ## Verification and evidence
 
@@ -46,8 +46,8 @@ This milestone signs and verifies artifacts and attestations. It does not introd
 
 - [ ] The approved release artifact verifies against every identity constraint.
 - [ ] Unsigned, tampered, and wrong-identity artifacts fail.
-- [ ] OIDC permission exists only on the protected signing job.
-- [ ] No long-lived signing key is created or stored.
+- [x] OIDC permission exists only on the protected signing job.
+- [x] No long-lived signing key is created or stored.
 
 ## Risks and controls
 

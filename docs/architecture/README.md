@@ -1,6 +1,6 @@
 # Architecture
 
-These views explain the implemented M01–M03 trust boundaries and distinguish them from later delivery controls.
+These views explain the implemented M01–M04 trust boundaries and distinguish them from later delivery controls.
 
 | View | Question answered |
 | --- | --- |
@@ -10,7 +10,7 @@ These views explain the implemented M01–M03 trust boundaries and distinguish t
 
 ## Scope legend
 
-- **M01–M03:** service validation, layered scanning, reproducible OCI generation, SPDX inventory, and provenance linkage.
-- **Planned:** keyless signing in M04 and release policy in M05.
+- **M01–M04:** service validation, layered scanning, reproducible OCI generation, SPDX/provenance linkage, and isolated signing policy.
+- **Planned:** release policy in M05.
 
 The diagrams describe intended interfaces and boundaries. They do not constitute execution evidence or imply that a planned control is present.
