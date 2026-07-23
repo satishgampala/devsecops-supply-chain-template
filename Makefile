@@ -15,7 +15,7 @@ BINARY ?= $(BIN_DIR)/service
 GO_BUILD_FLAGS := -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w -buildid="
 DIGEST_RESPONSE := {"algorithm":"sha256","digest":"3f412634a4ea9da04b558d0e32b0062a692e41a1c1d10f0c5c707f14440392ce"}
 
-.PHONY: fmt fmt-check vet test test-race build verify container-build container-smoke security-test security-scan security-fixtures
+.PHONY: fmt fmt-check vet test test-race build verify container-build container-smoke security-test security-scan security-fixtures integrity integrity-repro
 
 fmt:
 	@find . -type f -name '*.go' \
@@ -119,3 +119,9 @@ security-scan:
 
 security-fixtures:
 	./scripts/security-fixtures.sh
+
+integrity:
+	./scripts/generate-integrity.sh
+
+integrity-repro:
+	./scripts/integrity-repro.sh

@@ -8,6 +8,15 @@ CACHE_DIR=${SECURITY_CACHE_DIR:-"$ROOT/.local/security-cache"}
 IMAGE=${IMAGE:-devsecops-supply-chain-template:local}
 EVALUATION_TIME=${EVALUATION_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
 
+case "$REPORT_DIR" in
+  /*) ;;
+  *) REPORT_DIR="$ROOT/$REPORT_DIR" ;;
+esac
+case "$CACHE_DIR" in
+  /*) ;;
+  *) CACHE_DIR="$ROOT/$CACHE_DIR" ;;
+esac
+
 GOSEC_IMAGE='ghcr.io/securego/gosec@sha256:4342ad119a7c69f3f4e4ce78d81ba183dc774a70a7a4c6eeb15fe9e511f214f0'
 GOVULNCHECK_REFERENCE='golang.org/x/vuln/cmd/govulncheck@v1.6.0'
 GITLEAKS_IMAGE='ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f'
@@ -16,7 +25,12 @@ OSV_IMAGE='ghcr.io/google/osv-scanner@sha256:5116601dedc01c1c580eb92371883ec052f
 TRIVY_IMAGE='docker.io/aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f'
 
 case "$REPORT_DIR" in
-  ''|/) printf '%s\n' 'unsafe report directory' >&2; exit 2 ;;
+  "$ROOT"/*) ;;
+  *) printf '%s\n' 'report directory must remain inside the working tree' >&2; exit 2 ;;
+esac
+case "$CACHE_DIR" in
+  "$ROOT"/*) ;;
+  *) printf '%s\n' 'cache directory must remain inside the working tree' >&2; exit 2 ;;
 esac
 
 mkdir -p "$REPORT_DIR/raw" "$REPORT_DIR/normalized" "$REPORT_DIR/metadata" "$CACHE_DIR/trivy"
@@ -147,7 +161,7 @@ run_file_scan \
     --volume "$CACHE_DIR/trivy:/cache" "$TRIVY_IMAGE" \
     --cache-dir /cache fs --scanners misconfig \
     --severity MEDIUM,HIGH,CRITICAL --exit-code 1 \
-    --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git \
+    --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git --skip-dirs /src/dist \
     --format sarif --output /reports/raw/trivy-config.sarif /src
 
 make container-build
@@ -170,7 +184,7 @@ run_file_scan \
     --volume "$CACHE_DIR/trivy:/cache" "$TRIVY_IMAGE" \
     --cache-dir /cache fs --scanners license --license-full \
     --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --exit-code 1 \
-    --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git \
+    --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git --skip-dirs /src/dist \
     --format sarif --output /reports/raw/trivy-license.sarif /src
 
 docker run --rm "$TRIVY_IMAGE" --version >"$REPORT_DIR/metadata/trivy-version.txt"
