@@ -41,6 +41,7 @@ jobs:
       - name: Verify host and container behavior
         run: |
           make verify
+          make container-build
           make container-smoke
 
       - name: Verify scanner failure fixtures

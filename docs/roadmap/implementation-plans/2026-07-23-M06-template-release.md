@@ -40,12 +40,12 @@
 - Update: `.github/workflows/signing.yml`
 - Update: `Makefile`
 
-- [ ] Expose a `workflow_call` workflow with documented outputs and no secrets or variable command inputs.
-- [ ] Run host, race, container, scanner-fixture, live scanner, integrity, signing-policy, and release-policy checks against caller-controlled source.
-- [ ] Keep every job on ephemeral GitHub-hosted runners with top-level deny-all and job-level `contents: read`.
-- [ ] Upload explicit scanner and integrity evidence with bounded retention.
-- [ ] Add a same-repository caller that grants only `contents: read`.
-- [ ] Fix the signing workflow to build the container before its smoke test.
+- [x] Expose a `workflow_call` workflow with documented outputs and no secrets or variable command inputs.
+- [x] Run host, race, container, scanner-fixture, live scanner, integrity, signing-policy, and release-policy checks against caller-controlled source.
+- [x] Keep every job on ephemeral GitHub-hosted runners with top-level deny-all and job-level `contents: read`.
+- [x] Upload explicit scanner and integrity evidence with bounded retention.
+- [x] Add a same-repository caller that grants only `contents: read`.
+- [x] Fix the signing workflow to build the container before its smoke test.
 
 ## Task 2: Implement deterministic template initialization
 

@@ -1,0 +1,21 @@
+name: Template Self-Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  supply-chain:
+    name: Complete reusable validation
+    permissions:
+      contents: read
+    uses: ./.github/workflows/reusable-validation.yml
