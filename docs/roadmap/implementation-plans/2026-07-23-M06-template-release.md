@@ -80,11 +80,11 @@
 - Create: `docs/operations/release-runbook.md`
 - Create: `docs/operations/security-exceptions.md`
 
-- [ ] Add Apache-2.0 licensing and concise contribution, conduct, vulnerability-reporting, and ownership policies.
-- [ ] Document protected-branch, code-owner, dependency-update, exception, and incident expectations without claiming remote settings exist.
-- [ ] Add the official immutable Scorecard workflow with isolated write and OIDC permissions.
-- [ ] Preserve grouped weekly Go, Docker, and Actions updates with delayed version adoption.
-- [ ] Define a tag-to-evidence release procedure, rollback criteria, and post-release verification.
+- [x] Add Apache-2.0 licensing and concise contribution, conduct, vulnerability-reporting, and ownership policies.
+- [x] Document protected-branch, code-owner, dependency-update, exception, and incident expectations without claiming remote settings exist.
+- [x] Add the official immutable Scorecard workflow with isolated write and OIDC permissions.
+- [x] Preserve grouped weekly Go, Docker, and Actions updates with delayed version adoption.
+- [x] Define a tag-to-evidence release procedure, rollback criteria, and post-release verification.
 
 ## Task 4: Publish architecture, threat, and control documentation
 

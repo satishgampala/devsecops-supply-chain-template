@@ -9,6 +9,7 @@ OLD_ARTIFACT='ghcr.io/satishgampala/devsecops-supply-chain-template'
 OLD_SOURCE_URI='https://github.com/satishgampala/devsecops-supply-chain-template'
 OLD_CERTIFICATE_IDENTITY='https://github.com/satishgampala/devsecops-supply-chain-template/.github/workflows/signing.yml@refs/heads/main'
 OLD_SERVICE='devsecops-supply-chain-template'
+OLD_CODEOWNER='@satishgampala'
 
 usage() {
   printf '%s\n' \
@@ -16,7 +17,8 @@ usage() {
     '  --repository OWNER/REPOSITORY \\' \
     '  --module MODULE_PATH \\' \
     '  --artifact ghcr.io/OWNER/NAME \\' \
-    '  --service-name DNS_LABEL' >&2
+    '  --service-name DNS_LABEL \\' \
+    '  --codeowner @USER_OR_ORG/TEAM' >&2
   exit 2
 }
 
@@ -24,6 +26,7 @@ repository=
 module=
 artifact=
 service_name=
+codeowner=
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -47,6 +50,11 @@ while [ "$#" -gt 0 ]; do
       service_name=$2
       shift 2
       ;;
+    --codeowner)
+      [ "$#" -ge 2 ] || usage
+      codeowner=$2
+      shift 2
+      ;;
     *)
       usage
       ;;
@@ -57,6 +65,7 @@ done
 [ -n "$module" ] || usage
 [ -n "$artifact" ] || usage
 [ -n "$service_name" ] || usage
+[ -n "$codeowner" ] || usage
 
 printf '%s' "$repository" |
   grep --extended-regexp --quiet '^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$' ||
@@ -70,6 +79,9 @@ printf '%s' "$artifact" |
 printf '%s' "$service_name" |
   grep --extended-regexp --quiet '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' ||
   { printf '%s\n' 'service-name must be a lowercase DNS label of at most 63 characters' >&2; exit 2; }
+printf '%s' "$codeowner" |
+  grep --extended-regexp --quiet '^@[A-Za-z0-9][A-Za-z0-9-]*(/[A-Za-z0-9][A-Za-z0-9_-]*)?$' ||
+  { printf '%s\n' 'codeowner must be @USER or @ORG/TEAM' >&2; exit 2; }
 
 case "/$repository/$module/$artifact/" in
   *'/../'*|*'/./'*) printf '%s\n' 'identity path segments must not be dot segments' >&2; exit 2 ;;
@@ -83,6 +95,8 @@ esac
   { printf '%s\n' 'artifact identity is already the template default' >&2; exit 2; }
 [ "$service_name" != "$OLD_SERVICE" ] ||
   { printf '%s\n' 'service identity is already the template default' >&2; exit 2; }
+[ "$codeowner" != "$OLD_CODEOWNER" ] ||
+  { printf '%s\n' 'codeowner is already the template default' >&2; exit 2; }
 
 command -v git >/dev/null 2>&1 || { printf '%s\n' 'git is required' >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || { printf '%s\n' 'jq is required' >&2; exit 2; }
@@ -131,6 +145,7 @@ replace_exact "$OLD_REPOSITORY" "$repository"
 replace_exact "$OLD_SERVICE:local" "$service_name:local"
 replace_exact "$OLD_SERVICE-smoke-" "$service_name-smoke-"
 replace_exact "$OLD_SERVICE:vulnerable-fixture" "$service_name:vulnerable-fixture"
+replace_exact "$OLD_CODEOWNER" "$codeowner"
 
 security_policy_sha=$(shasum -a 256 "$ROOT/policy/security-policy.json" | awk '{print $1}')
 signing_policy_sha=$(shasum -a 256 "$ROOT/policy/signing-identity.json" | awk '{print $1}')
@@ -165,6 +180,6 @@ remaining=$(
   exit 1
 }
 
-printf 'template initialized; repository=%s; module=%s; artifact=%s; service=%s\n' \
-  "$repository" "$module" "$artifact" "$service_name"
+printf 'template initialized; repository=%s; module=%s; artifact=%s; service=%s; codeowner=%s\n' \
+  "$repository" "$module" "$artifact" "$service_name" "$codeowner"
 printf '%s\n' 'review the diff, run make template-test, then commit the initialized state'

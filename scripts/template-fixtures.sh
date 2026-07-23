@@ -28,7 +28,8 @@ if "$FIXTURE/scripts/initialize-template.sh" \
   --repository '../invalid' \
   --module 'github.com/example-org/secure-service' \
   --artifact 'ghcr.io/example-org/secure-service' \
-  --service-name 'secure-service'
+  --service-name 'secure-service' \
+  --codeowner '@example-org/security'
 then
   printf '%s\n' 'invalid repository fixture unexpectedly succeeded' >&2
   exit 1
@@ -39,12 +40,14 @@ fi
   --repository 'example-org/secure-service' \
   --module 'github.com/example-org/secure-service' \
   --artifact 'ghcr.io/example-org/secure-service' \
-  --service-name 'secure-service'
+  --service-name 'secure-service' \
+  --codeowner '@example-org/security'
 
 [ "$(sed -n '1p' "$FIXTURE/go.mod")" = 'module github.com/example-org/secure-service' ]
 [ "$(jq -r '.repository' "$FIXTURE/policy/signing-identity.json")" = 'example-org/secure-service' ]
 [ "$(jq -r '.artifactName' "$FIXTURE/policy/release-v1.json")" = 'ghcr.io/example-org/secure-service' ]
 [ "$(jq -r '.module' "$FIXTURE/policy/release-v1.json")" = 'github.com/example-org/secure-service' ]
+grep --fixed-strings --quiet '@example-org/security' "$FIXTURE/.github/CODEOWNERS"
 
 signing_sha=$(shasum -a 256 "$FIXTURE/policy/signing-identity.json" | awk '{print $1}')
 [ "$(jq -r '.signingPolicySHA256' "$FIXTURE/policy/release-v1.json")" = "$signing_sha" ]

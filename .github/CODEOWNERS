@@ -1,0 +1,11 @@
+* @satishgampala
+
+/.github/workflows/ @satishgampala
+/policy/ @satishgampala
+/scripts/ @satishgampala
+/internal/integrity/ @satishgampala
+/internal/releasepolicy/ @satishgampala
+/internal/securityreport/ @satishgampala
+/internal/signingpolicy/ @satishgampala
+/Dockerfile @satishgampala
+/Makefile @satishgampala

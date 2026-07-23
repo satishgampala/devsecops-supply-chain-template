@@ -1,0 +1,62 @@
+name: Bug report
+description: Report reproducible incorrect behavior that is not security-sensitive
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not disclose vulnerabilities here. Follow SECURITY.md for private reporting.
+  - type: input
+    id: revision
+    attributes:
+      label: Revision
+      description: Full commit SHA or version where the behavior occurs
+      placeholder: 40-character commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Reference service
+        - Container
+        - Security scanning
+        - SBOM or provenance
+        - Signing policy
+        - Release policy
+        - Template initialization
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal commands, inputs, and observed output
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and relevant Go, Docker, Make, and tool versions
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I removed credentials, private data, and security-sensitive details.
+          required: true
+        - label: I searched existing issues for the same behavior.
+          required: true
