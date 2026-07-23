@@ -2,11 +2,11 @@
 
 An open-source reference implementation for taking a deliberately small Go service through a progressively hardened software-supply-chain workflow. The six-milestone roadmap separates the pipeline baseline, layered security scanning, SBOM, provenance, signing, and release policy so each control can be verified with evidence.
 
-> **Current state:** M04 keyless signing controls are **implemented locally**. The [exact-identity policy and negative gates](docs/roadmap/evidence/M04/verification.md) pass. GitHub-hosted keyless execution remains pending; release eligibility begins in M05.
+> **Current state:** M05 release-policy controls are **implemented locally**. The [complete evidence contract and negative gates](docs/roadmap/evidence/M05/verification.md) pass. A real eligible decision still requires an authorized GitHub-hosted keyless signing run.
 
 ## Project outcome
 
-The completed template is intended to produce a tested, scanned, SBOM-described, provenance-attested, signed, and policy-verified release artifact. M01 establishes the service and hardened CI baseline. M02 adds layered security controls. M03 binds inventory and provenance to a reproducible OCI subject. M04 isolates keyless signing and enforces exact Sigstore and workflow identities.
+The completed template is intended to produce a tested, scanned, SBOM-described, provenance-attested, signed, and policy-verified release artifact. M01 establishes the service and hardened CI baseline. M02 adds layered security controls. M03 binds inventory and provenance to a reproducible OCI subject. M04 isolates keyless signing and enforces exact Sigstore and workflow identities. M05 independently revalidates every evidence class before emitting an artifact-bound eligibility decision.
 
 ## Explore the architecture
 
@@ -17,6 +17,7 @@ The completed template is intended to produce a tested, scanned, SBOM-described,
 - [Security scanning and policy](docs/security/scanning.md)
 - [SBOM and provenance](docs/security/sbom-provenance.md)
 - [Keyless signing and identity policy](docs/security/signing.md)
+- [Release evidence and eligibility policy](docs/security/release-policy.md)
 - [ADR 0001: Use a Go reference service](docs/decisions/0001-use-go-reference-service.md)
 - [Roadmap](docs/roadmap/ROADMAP.md) and [current status](docs/roadmap/STATUS.md)
 
@@ -67,6 +68,12 @@ Run deterministic M04 identity and signing-context tests:
 
 ```sh
 make signing-test
+```
+
+Run the M05 release contract, safe-path, policy, and tamper scenarios:
+
+```sh
+make release-policy-test
 ```
 
 Start the reference service in a second terminal:
@@ -124,6 +131,7 @@ The API accepts values up to 1 KiB in JSON request bodies capped at 4 KiB. It is
 | `make integrity` | Build the OCI archive and verify its SPDX and local provenance evidence. | Yes |
 | `make integrity-repro` | Run two clean generations and compare deterministic outputs. | Yes |
 | `make signing-test` | Test exact signing identity, context, artifact, and failure policy. | No |
+| `make release-policy-test` | Test the complete release contract, verifier, safe evidence store, and tamper scenarios. | Yes |
 
 ## Current security design
 
@@ -142,16 +150,19 @@ The current contract is intentionally explicit:
 - an SPDX 2.3 inventory generated from the final archive and bound to its manifest digest; and
 - explicit local SLSA provenance plus a protected default-branch workflow for platform attestations;
 - an OIDC-only signing job separated from repository checkout and policy evaluation; and
-- exact Fulcio issuer, certificate SAN, repository, workflow, ref, SHA, trigger, artifact, SCT, and transparency-log requirements.
+- exact Fulcio issuer, certificate SAN, repository, workflow, ref, SHA, trigger, artifact, SCT, and transparency-log requirements;
+- a rooted, traversal-resistant evidence store with strict schemas, bounded reads, and SHA-256 checks; and
+- a deterministic release verifier that re-evaluates tests, scanner reports, exceptions, OCI structure, SPDX, provenance, signing identity, and three Cosign bundles.
 
-The [M02 scanning guide](docs/security/scanning.md), [M03 integrity guide](docs/security/sbom-provenance.md), and [M04 signing guide](docs/security/signing.md) define the implemented control boundaries.
+The [M02 scanning guide](docs/security/scanning.md), [M03 integrity guide](docs/security/sbom-provenance.md), [M04 signing guide](docs/security/signing.md), and [M05 release-policy guide](docs/security/release-policy.md) define the implemented control boundaries.
 
 ## Current limitations
 
 - No successful keyless signature is claimed until an authorized hosted run produces verifiable Sigstore bundles.
-- No release-eligibility decision or deployment gate exists; that policy is planned for M05.
+- The locally eligible M05 fixture uses an explicit test-only Cosign substitute and is not release authorization.
 - The OCI archive and local statements are not published by local commands.
 - No successful GitHub Actions, hosted CodeQL, hosted scanner, or hosted attestation run is claimed here.
+- Reusable-workflow adoption, repository governance, and versioned release operations begin in M06.
 
 ## Roadmap
 
@@ -161,7 +172,7 @@ The [M02 scanning guide](docs/security/scanning.md), [M03 integrity guide](docs/
 | [M02 — Security scanning](docs/roadmap/milestones/M02-security-scanning.md) | Implemented Locally | Layered source, dependency, secret, workflow, IaC, container, and license checks. |
 | [M03 — SBOM and provenance](docs/roadmap/milestones/M03-sbom-provenance.md) | Implemented Locally | Artifact-bound component inventory and build provenance. |
 | [M04 — Signing](docs/roadmap/milestones/M04-signing.md) | Implemented Locally | Keyless signing with strict workflow-identity verification. |
-| [M05 — Release policy](docs/roadmap/milestones/M05-release-policy.md) | Not Started | Explainable deployment-eligibility decisions bound to immutable artifacts. |
+| [M05 — Release policy](docs/roadmap/milestones/M05-release-policy.md) | Implemented Locally | Explainable deployment-eligibility decisions bound to immutable artifacts. |
 | [M06 — Template release](docs/roadmap/milestones/M06-template-release.md) | Not Started | Clean consumer adoption, demonstration, and versioned release. |
 
 Do not mark a task or milestone complete until its documented verification command has run and the observed result has been recorded.

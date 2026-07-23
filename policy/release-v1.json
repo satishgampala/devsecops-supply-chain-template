@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "version": "2026-07-21",
+  "artifactName": "ghcr.io/satishgampala/devsecops-supply-chain-template",
+  "sourceURI": "https://github.com/satishgampala/devsecops-supply-chain-template",
+  "platform": "linux/amd64",
+  "module": "github.com/satishgampala/devsecops-supply-chain-template",
+  "goVersion": "go1.26.5",
+  "provenanceBuildType": "https://github.com/satishgampala/devsecops-supply-chain-template/buildtypes/container/v1",
+  "provenanceBuilderID": "https://github.com/satishgampala/devsecops-supply-chain-template/builders/local-provenance-v1",
+  "sourceDateEpoch": 0,
+  "securityPolicySHA256": "d9a881d5e4752ab6af5e31be9958ce0ec02a96dfc108ee23a0734e5d9828e736",
+  "signingPolicySHA256": "f5f43f291e56e05d3454d7d8d220134e2cdbcbdc29666531ea98c1a8613ab4d2",
+  "cosignVersion": "v3.1.2",
+  "maxAcceptedExceptions": 1,
+  "requiredTests": [
+    "build",
+    "container-smoke",
+    "host",
+    "integrity",
+    "race",
+    "security-fixtures"
+  ],
+  "requiredScanners": [
+    "gitleaks",
+    "gosec",
+    "govulncheck",
+    "osv-scanner",
+    "trivy-config",
+    "trivy-image",
+    "trivy-license",
+    "zizmor"
+  ]
+}

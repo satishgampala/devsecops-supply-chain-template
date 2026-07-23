@@ -2,6 +2,7 @@
 /bin/
 /reports/
 /dist/
+/release-build/
 
 # Test and coverage output
 /coverage*
