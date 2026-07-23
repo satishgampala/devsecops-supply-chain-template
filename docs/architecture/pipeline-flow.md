@@ -1,6 +1,6 @@
 # Pipeline Flow
 
-M01 provides independent host and container validation. M02 adds normalized scanner policy. M03 binds SPDX and provenance to one reproducible OCI subject. M04 separates evidence production, OIDC signing, cryptographic verification, and identity-policy evaluation. M05 independently revalidates every evidence class before deciding eligibility. Dashed edges denote hosted signing execution that remains unobserved.
+M01 provides independent host and container validation. M02 adds normalized scanner policy. M03 binds SPDX and provenance to one reproducible OCI subject. M04 separates evidence production, OIDC signing, cryptographic verification, and identity-policy evaluation. M05 independently revalidates every evidence class before deciding eligibility. M06 packages the local contract for deterministic initialization and reusable validation. Dashed edges denote hosted execution or publication that remains unobserved.
 
 ```mermaid
 flowchart TB
@@ -58,10 +58,22 @@ flowchart TB
     bundles --> eligibility[Artifact-bound eligibility decision]
   end
 
+  subgraph template["M06 — template and operations"]
+    direction TB
+    initialize[Fail-closed identity initializer] --> consumer[Detached clean consumer]
+    consumer --> reusable[Secret-free reusable validation]
+    reusable --> host
+    reusable --> source
+    reusable --> oci
+    reusable --> signPolicy
+    eligibility --> runbook[Release runbook checkpoint]
+    runbook -.-> published[Hosted immutable tag and release]
+  end
+
   classDef currentNode fill:#e8f2ff,stroke:#2167ae,color:#102a43;
   classDef planned fill:#f5f5f5,stroke:#777,stroke-dasharray:5 5,color:#333;
-  class ci,host,container,m01,source,dependency,artifact,normalize,policy,m02,oci,subject,syft,provenance,bind,m03,transfer,fixtures,signPolicy,m04,collect,verify,bundles,eligibility currentNode;
-  class signer,cosign,identity planned;
+  class ci,host,container,m01,source,dependency,artifact,normalize,policy,m02,oci,subject,syft,provenance,bind,m03,transfer,fixtures,signPolicy,m04,collect,verify,bundles,eligibility,initialize,consumer,reusable,runbook currentNode;
+  class signer,cosign,identity,published planned;
 ```
 
-M02 scanners receive no repository credentials or Docker socket. M03's local generator requires a clean tree and grants no cloud credentials. M04 grants `id-token: write` only to a protected signer that downloads bounded evidence and never checks out source. M05 runs in a separate no-OIDC job, opens only hash-declared files below a bounded evidence root, and revalidates source reports instead of trusting summary booleans. The workflow structure and local failure policy are implemented; Fulcio, Rekor, and certificate verification remain pending until hosted execution.
+M02 scanners receive no repository credentials or Docker socket. M03's local generator requires a clean tree and grants no cloud credentials. M04 grants `id-token: write` only to a protected signer that downloads bounded evidence and never checks out source. M05 runs in a separate no-OIDC job, opens only hash-declared files below a bounded evidence root, and revalidates source reports instead of trusting summary booleans. M06's reusable workflow accepts no inputs or secrets and has no OIDC permission; repository-specific signing remains isolated. Local structure and failure policy are implemented. Fulcio, Rekor, certificate verification, hosted Scorecard results, tags, and releases remain pending.

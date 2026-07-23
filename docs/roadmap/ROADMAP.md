@@ -26,18 +26,18 @@ Create a reusable public-repository template that takes a small service from sou
 
 | ID | Milestone | Status | Depends on | Exit outcome |
 | --- | --- | --- | --- | --- |
-| M01 | [Reference service and pipeline baseline](milestones/M01-pipeline-baseline.md) | In Progress | None | A minimal service builds and tests reproducibly with a hardened CI foundation. |
+| M01 | [Reference service and pipeline baseline](milestones/M01-pipeline-baseline.md) | Implemented Locally | None | A minimal service builds and tests reproducibly with a hardened CI foundation. |
 | M02 | [Source, dependency, IaC, and container scanning](milestones/M02-security-scanning.md) | Implemented Locally | M01 | Security checks detect seeded defects and enforce documented severity policy. |
 | M03 | [SBOM and SLSA provenance](milestones/M03-sbom-provenance.md) | Implemented Locally | M02 | Every release artifact has verifiable component inventory and build provenance. |
 | M04 | [Keyless signing and identity verification](milestones/M04-signing.md) | Implemented Locally | M03 | Artifacts are signed and verification binds them to the expected workflow identity. |
 | M05 | [Release policy and deployment eligibility](milestones/M05-release-policy.md) | Implemented Locally | M04 | A single verifier produces an evidence-backed eligible or ineligible decision. |
-| M06 | [Reusable template, demonstration, and release](milestones/M06-template-release.md) | Not Started | M05 | Another repository can adopt the template and reproduce the complete secure release. |
+| M06 | [Reusable template, demonstration, and release](milestones/M06-template-release.md) | Implemented Locally | M05 | A detached consumer can adopt the template and reproduce its local security controls. |
 
-M02–M05 are implemented and verified locally; their GitHub-hosted execution remains pending. M06 describes planned work and is not a current repository capability.
+M01–M06 are implemented and verified locally. GitHub-hosted execution, repository rules, Scorecard results, keyless signing, registry publication, immutable tags, and releases remain pending.
 
 ## Project completion gate
 
-The project is complete only when a clean release passes all checks, seeded vulnerabilities and tampering fail for expected reasons, signatures and provenance bind to the intended workflow identity, and a fresh consumer repository can adopt the template without private infrastructure.
+Local implementation is complete when all checks pass, seeded vulnerabilities and tampering fail for expected reasons, and a detached consumer can adopt the template without private infrastructure. Publication is complete only after hosted signatures and provenance bind to the intended workflow identity and an immutable versioned release is independently verified.
 
 ## Planning source
 

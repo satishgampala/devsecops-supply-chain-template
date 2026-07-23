@@ -112,10 +112,10 @@
 - Update: `docs/roadmap/STATUS.md`
 - Create: `docs/roadmap/evidence/M06/verification.md`
 
-- [ ] Run initialization, clean-consumer, host, race, container, scanner, integrity, policy, Actionlint, zizmor, link, Mermaid, secret, and public-content gates.
-- [ ] Review every workflow trigger, permission, action pin, expression, artifact boundary, and untrusted-code path.
-- [ ] Record exact local evidence, clean-copy revision, expected negative result, and remote limitations.
-- [ ] Mark M06 implemented locally while hosted workflows, repository rules, Scorecard result, tag, and public release remain pending.
+- [x] Run initialization, clean-consumer, host, race, container, scanner, integrity, policy, Actionlint, zizmor, link, Mermaid, secret, and public-content gates.
+- [x] Review every workflow trigger, permission, action pin, expression, artifact boundary, and untrusted-code path.
+- [x] Record exact local evidence, clean-copy revision, expected negative result, and remote limitations.
+- [x] Mark M06 implemented locally while hosted workflows, repository rules, Scorecard result, tag, and public release remain pending.
 
 ## Completion gate
 
