@@ -64,7 +64,7 @@ make signing-test
 make release-policy-test
 ```
 
-`make template-test` independently exercises the initializer in a detached temporary repository. It also proves malformed initialization and a seeded Go source defect fail.
+Before initialization, `make template-test` independently exercises the one-time initializer in a detached temporary repository. It also proves malformed initialization and a seeded Go source defect fail. Do not rerun that template-only fixture after initialization; use the verification commands above in the initialized repository.
 
 ## 3. Call reusable validation
 

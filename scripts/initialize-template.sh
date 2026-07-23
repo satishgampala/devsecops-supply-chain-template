@@ -182,4 +182,4 @@ remaining=$(
 
 printf 'template initialized; repository=%s; module=%s; artifact=%s; service=%s; codeowner=%s\n' \
   "$repository" "$module" "$artifact" "$service_name" "$codeowner"
-printf '%s\n' 'review the diff, run make template-test, then commit the initialized state'
+printf '%s\n' 'review and commit the identity diff, then run the adoption-guide verification commands'
