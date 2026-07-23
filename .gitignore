@@ -3,6 +3,7 @@
 /reports/
 /dist/
 /release-build/
+/.local/
 
 # Test and coverage output
 /coverage*

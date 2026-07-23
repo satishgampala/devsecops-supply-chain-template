@@ -57,12 +57,12 @@
 - Create: `docs/guides/adoption.md`
 - Create: `docs/reference/reusable-workflow.md`
 
-- [ ] Validate repository, Go module, OCI artifact, and service-name arguments before any write.
-- [ ] Require a clean tracked tree and an exact uninitialized template identity.
-- [ ] Replace code imports, policies, workflows, scripts, tests, and active documentation using exact values only.
-- [ ] Recalculate signing-policy SHA-256 in the release policy and verify all old executable identities are absent.
-- [ ] Prove a clean initialized copy passes host tests and policy fixtures.
-- [ ] Prove malformed input and a seeded source defect fail with expected nonzero results.
+- [x] Validate repository, Go module, OCI artifact, and service-name arguments before any write.
+- [x] Require a clean tracked tree and an exact uninitialized template identity.
+- [x] Replace code imports, policies, workflows, scripts, tests, and active documentation using exact values only.
+- [x] Recalculate signing-policy SHA-256 in the release policy and verify all old executable identities are absent.
+- [x] Prove a clean initialized copy passes host tests and policy fixtures.
+- [x] Prove malformed input and a seeded source defect fail with expected nonzero results.
 
 ## Task 3: Complete public-project security and operations
 
