@@ -1,0 +1,11 @@
+.git
+.github
+.local
+bin
+coverage*
+*.out
+.DS_Store
+.env*
+*.md
+**/*.md
+docs
