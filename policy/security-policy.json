@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "version": "2026-07-21",
+  "requiredScanners": [
+    "gitleaks",
+    "gosec",
+    "govulncheck",
+    "osv-scanner",
+    "trivy-config",
+    "trivy-image",
+    "trivy-license",
+    "zizmor"
+  ],
+  "blockingSeverities": [
+    "medium",
+    "high",
+    "critical"
+  ],
+  "allowedLicenses": [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "ISC",
+    "MIT",
+    "MPL-2.0",
+    "Unlicense"
+  ],
+  "prohibitedLicenses": [
+    "AGPL-1.0-only",
+    "AGPL-3.0-only",
+    "BUSL-1.1",
+    "Commons-Clause",
+    "GPL-1.0-only",
+    "GPL-2.0-only",
+    "GPL-3.0-only",
+    "SSPL-1.0"
+  ],
+  "exceptions": []
+}

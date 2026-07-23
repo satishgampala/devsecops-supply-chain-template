@@ -1,0 +1,14 @@
+name: Synthetic untrusted expression
+
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  fixture:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Unsafe interpolation fixture
+        run: echo "${{ github.event.issue.title }}"

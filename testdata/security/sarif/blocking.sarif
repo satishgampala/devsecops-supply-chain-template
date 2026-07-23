@@ -1,0 +1,44 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Fixture Scanner",
+          "version": "1.0.0",
+          "rules": [
+            {
+              "id": "fixture/high-risk",
+              "helpUri": "https://example.invalid/remediation/high-risk",
+              "properties": {
+                "security-severity": "9.1"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "fixture/high-risk",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Synthetic blocking finding"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "testdata/security/example.txt"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

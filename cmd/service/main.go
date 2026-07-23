@@ -117,7 +117,7 @@ func runHealthcheck(ctx context.Context, port string) error {
 	request, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		"http://"+net.JoinHostPort("127.0.0.1", validatedPort)+"/healthz",
+		"http://127.0.0.1/healthz",
 		nil,
 	)
 	if err != nil {
@@ -126,6 +126,11 @@ func runHealthcheck(ctx context.Context, port string) error {
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = nil
+	target := net.JoinHostPort("127.0.0.1", validatedPort)
+	dialer := &net.Dialer{Timeout: healthcheckPeriod}
+	transport.DialContext = func(ctx context.Context, network, _ string) (net.Conn, error) {
+		return dialer.DialContext(ctx, network, target)
+	}
 	defer transport.CloseIdleConnections()
 
 	client := &http.Client{

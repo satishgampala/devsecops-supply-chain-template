@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Isolated scanner regression fixtures"
+paths = [
+  '''(^|/)testdata/security/''',
+  '''(^|/)\.local/''',
+  '''(^|/)bin/'''
+]
