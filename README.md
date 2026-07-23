@@ -8,6 +8,87 @@ An open-source reference implementation for taking a deliberately small Go servi
 
 The template defines a path to a tested, scanned, SBOM-described, provenance-attested, signed, and policy-verified release artifact. M01 establishes the service and hardened CI baseline. M02 adds layered security controls. M03 binds inventory and provenance to a reproducible OCI subject. M04 isolates keyless signing and enforces exact Sigstore and workflow identities. M05 independently revalidates every evidence class before emitting an artifact-bound eligibility decision. M06 adds deterministic initialization, reusable validation, clean-consumer tests, repository governance, and release operations.
 
+## Architecture at a glance
+
+Solid paths are implemented local or repository controls. Dashed paths require protected hosted execution or authorized publication.
+
+```mermaid
+flowchart LR
+  contributor[Contributor] --> repository[GitHub repository]
+  maintainer[Maintainer] --> repository
+
+  subgraph controlPlane["Supply-chain control plane"]
+    direction TB
+    validation[Reusable validation]
+    checks[Host and container checks]
+    scanners[Eight-scanner security gate]
+    evidence[OCI image<br/>SPDX SBOM<br/>SLSA provenance]
+    signer[Keyless signer<br/>OIDC · no checkout]
+    verifier[Release-policy verifier]
+    decision{All required evidence valid?}
+
+    validation --> checks
+    validation --> scanners
+    checks --> evidence
+    scanners --> evidence
+    evidence --> verifier
+    evidence -.-> signer
+    signer -.-> verifier
+    verifier --> decision
+  end
+
+  repository --> validation
+  repository -.-> signer
+  signer -.-> sigstore[(Fulcio and Rekor)]
+  decision -->|Yes| eligible[Eligible artifact digest]
+  decision -->|No| rejected[Ineligible<br/>stable reason codes]
+  eligible -.-> registry[(OCI registry)]
+  consumer[Artifact consumer] --> verifier
+  consumer --> registry
+
+  classDef implemented fill:#e8f2ff,stroke:#2167ae,color:#102a43;
+  classDef hosted fill:#f5f5f5,stroke:#777,stroke-dasharray:5 5,color:#333;
+  class validation,checks,scanners,evidence,verifier,decision,eligible,rejected implemented;
+  class signer,sigstore,registry hosted;
+```
+
+## Secure release flow
+
+Each milestone adds one independently testable control boundary. A failed gate stops the artifact and emits deterministic reasons.
+
+```mermaid
+flowchart TB
+  initialize[M06<br/>Initialize exact repository identities]
+  reusable[M06<br/>Reusable validation contract]
+  m01[M01<br/>Tests · race · build · hardened container]
+  m02[M02<br/>Source · dependency · secret · workflow<br/>IaC · image · license scanning]
+  m03[M03<br/>Reproducible OCI · SPDX SBOM<br/>SLSA provenance]
+  m04[M04<br/>Keyless signing · exact workflow identity]
+  m05[M05<br/>Independent complete-evidence verification]
+  gate{Release policy passes?}
+  eligible[Eligible immutable digest]
+  blocked[Blocked with stable reason codes]
+  release[Authorized tag and release]
+
+  initialize --> reusable
+  reusable --> m01
+  m01 --> m02
+  m02 --> m03
+  m03 -.-> m04
+  m04 -.-> m05
+  m05 --> gate
+  gate -->|Yes| eligible
+  gate -->|No| blocked
+  eligible -.-> release
+
+  classDef implemented fill:#e8f2ff,stroke:#2167ae,color:#102a43;
+  classDef hosted fill:#f5f5f5,stroke:#777,stroke-dasharray:5 5,color:#333;
+  class initialize,reusable,m01,m02,m03,m05,gate,eligible,blocked implemented;
+  class m04,release hosted;
+```
+
+Detailed views remain versioned in the [C4 system context](docs/architecture/c4-context.md), [C4 container view](docs/architecture/c4-containers.md), and [pipeline flow](docs/architecture/pipeline-flow.md).
+
 ## Explore the architecture
 
 - [Architecture guide](docs/architecture/README.md)
