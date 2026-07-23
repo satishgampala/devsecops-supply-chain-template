@@ -1,8 +1,8 @@
 # M05 - Release Policy and Deployment Eligibility
 
-- **Status:** Not Started
+- **Status:** Implemented Locally
 - **Depends on:** M04
-- **Implementation plan:** Not written; planned after the dependency milestone.
+- **Implementation plan:** [2026-07-21 M05 release policy](../implementation-plans/2026-07-21-M05-release-policy.md)
 
 ## Outcome
 
@@ -20,34 +20,36 @@ This milestone defines a release contract and decision engine. It does not deplo
 
 ## Tasks and subtasks
 
-- [ ] **T1: Define the release evidence contract.**
-  - [ ] Require artifact digest, test summary, scanner results, exception state, SBOM, provenance, signature, and identity constraints.
-  - [ ] Version the contract and define missing, malformed, failed, and accepted states.
-  - [ ] Keep original tool evidence available rather than reducing it to an unexplained boolean.
-- [ ] **T2: Implement the eligibility verifier.**
-  - [ ] Verify evidence schema and digest consistency before policy evaluation.
-  - [ ] Apply blocking severity, exception expiry, signer identity, provenance, and required-test rules.
-  - [ ] Emit eligible or ineligible with stable reason codes and evidence references.
-- [ ] **T3: Integrate admission-ready output.**
-  - [ ] Produce a machine-readable decision that a future deployment or admission control can consume.
-  - [ ] Keep the decision bound to one immutable artifact digest.
-  - [ ] Demonstrate rejection when an approved tag points to a different digest.
-- [ ] **T4: Build end-to-end negative scenarios.**
-  - [ ] Test blocking vulnerability, expired exception, missing SBOM, invalid provenance, unsigned artifact, and wrong workflow identity.
-  - [ ] Confirm each scenario fails for its primary expected reason.
-  - [ ] Test a clean release candidate through the full decision path.
+- [x] **T1: Define the release evidence contract.**
+  - [x] Require artifact digest, test summary, scanner results, exception state, SBOM, provenance, signature, and identity constraints.
+  - [x] Version the contract and define missing, malformed, failed, and accepted states.
+  - [x] Keep original tool evidence available rather than reducing it to an unexplained boolean.
+- [x] **T2: Implement the eligibility verifier.**
+  - [x] Verify evidence schema and digest consistency before policy evaluation.
+  - [x] Apply blocking severity, exception expiry, signer identity, provenance, and required-test rules.
+  - [x] Emit eligible or ineligible with stable reason codes and evidence references.
+- [x] **T3: Integrate admission-ready output.**
+  - [x] Produce a machine-readable decision that a future deployment or admission control can consume.
+  - [x] Keep the decision bound to one immutable artifact digest.
+  - [x] Reject mutable references and artifact digest mismatches.
+- [x] **T4: Build end-to-end negative scenarios.**
+  - [x] Test blocking vulnerability, expired exception, missing SBOM, invalid provenance, unsigned artifact, and wrong workflow identity.
+  - [x] Confirm each scenario fails for its primary expected reason.
+  - [x] Test a complete synthetic release candidate through the full decision path.
 
 ## Verification and evidence
 
-- Required future command: a single `make verify-release ARTIFACT=<immutable-reference>` or equivalent that runs every gate and exits nonzero on ineligibility.
-- Retain the evidence contract, clean decision, each negative decision, reason-code matrix, and tested digest under `docs/roadmap/evidence/M05/`.
+- Local contract command: `make release-policy-test` runs the complete synthetic path and exits nonzero on unexpected eligibility behavior.
+- Verification results, the reason-code matrix, and the tested digest are retained in [M05 evidence](../evidence/M05/verification.md). Hosted runs retain original evidence and decisions as explicit workflow artifacts.
 
 ## Exit criteria
 
-- [ ] One verifier can reproduce release eligibility locally and in CI.
-- [ ] Every decision identifies the exact artifact digest and source evidence.
-- [ ] All defined negative scenarios fail with stable reason codes.
-- [ ] The eligible path passes only when every required control is satisfied.
+- [x] One verifier can reproduce release eligibility locally and is integrated into the protected signing workflow.
+- [x] Every decision identifies the exact artifact digest and source evidence.
+- [x] All defined negative scenarios fail with stable reason codes.
+- [x] The eligible path passes only when every required control is satisfied.
+
+The real hosted eligible path remains pending because local fixtures do not create or validate a GitHub OIDC certificate, Rekor entry, or public signature.
 
 ## Risks and controls
 

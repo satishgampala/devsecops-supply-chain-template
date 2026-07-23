@@ -40,10 +40,10 @@
 - Create: `internal/releasepolicy/store.go`
 - Create: `internal/releasepolicy/store_test.go`
 
-- [ ] Define versioned policy, manifest, test-summary, decision, and evidence-reference schemas.
-- [ ] Require exact artifact, source, platform, policy digest, test, scanner, and tool identities.
-- [ ] Open evidence through a rooted store that rejects absolute paths, traversal, every symlink component, special files, and duplicate paths.
-- [ ] Bound JSON and streamed artifact reads and verify every referenced SHA-256 before semantic decoding.
+- [x] Define versioned policy, manifest, test-summary, decision, and evidence-reference schemas.
+- [x] Require exact artifact, source, platform, policy digest, test, scanner, and tool identities.
+- [x] Open evidence through a rooted store that rejects absolute paths, traversal, every symlink component, special files, and duplicate paths.
+- [x] Bound JSON and streamed artifact reads and verify every referenced SHA-256 before semantic decoding.
 
 ## Task 2: Implement deterministic release evaluation
 
@@ -55,12 +55,12 @@
 - Create: `cmd/releaseverify/main.go`
 - Create: `cmd/releaseverify/main_test.go`
 
-- [ ] Re-run security policy from original normalized reports and compare the recorded decision.
-- [ ] Require every named host, race, build, container, scanner-fixture, and integrity test.
-- [ ] Re-derive the OCI manifest digest and validate raw SPDX and local provenance against it.
-- [ ] Validate the exact signing-policy digest, decision identity, artifact hashes, and required bundles.
-- [ ] Invoke Cosign 3.1.2 with exact issuer and GitHub workflow flags for all three blobs.
-- [ ] Emit stable eligible/ineligible JSON with exact artifact identity, source SHA, policy digest, reasons, and sorted evidence states.
+- [x] Re-run security policy from original normalized reports and compare the recorded decision.
+- [x] Require every named host, race, build, container, scanner-fixture, and integrity test.
+- [x] Re-derive the OCI manifest digest and validate raw SPDX and local provenance against it.
+- [x] Validate the exact signing-policy digest, decision identity, artifact hashes, and required bundles.
+- [x] Invoke Cosign 3.1.2 with exact issuer and GitHub workflow flags for all three blobs.
+- [x] Emit stable eligible/ineligible JSON with exact artifact identity, source SHA, policy digest, reasons, and sorted evidence states.
 
 ## Task 3: Build positive and negative release scenarios
 
@@ -70,10 +70,10 @@
 - Create: `scripts/release-policy-fixtures.sh`
 - Update: `Makefile`
 
-- [ ] Prove the evaluator's complete synthetic contract can become eligible only after every injected verifier succeeds.
-- [ ] Reject blocking vulnerability, expired exception, scanner failure, failed test, missing SBOM, invalid provenance, absent signature, wrong workflow identity, artifact mismatch, policy mismatch, and evidence hash mismatch.
-- [ ] Confirm each scenario contains its primary stable reason code.
-- [ ] Prove malformed, duplicate, traversal, symlink, oversized, and mutable-reference inputs fail closed.
+- [x] Prove the evaluator's complete synthetic contract can become eligible only after every injected verifier succeeds.
+- [x] Reject blocking vulnerability, expired exception, scanner failure, failed test, missing SBOM, invalid provenance, absent signature, wrong workflow identity, artifact mismatch, policy mismatch, and evidence hash mismatch.
+- [x] Confirm each scenario contains its primary stable reason code.
+- [x] Prove malformed, duplicate, traversal, symlink, oversized, and mutable-reference inputs fail closed.
 
 ## Task 4: Integrate protected release verification
 
@@ -82,10 +82,10 @@
 - Update: `.github/workflows/signing.yml`
 - Create: `scripts/collect-release-evidence.sh`
 
-- [ ] Build tests, scanner reports, OCI, SPDX, and provenance without OIDC.
-- [ ] Transfer bounded evidence to a no-checkout OIDC signing job and create three Sigstore bundles.
-- [ ] Assemble the manifest and run the release verifier in a separate no-OIDC job with immutable Cosign.
-- [ ] Retain original evidence, bundles, manifest, and final decision without deploying or publishing.
+- [x] Build tests, scanner reports, OCI, SPDX, and provenance without OIDC.
+- [x] Transfer bounded evidence to a no-checkout OIDC signing job and create three Sigstore bundles.
+- [x] Assemble the manifest and run the release verifier in a separate no-OIDC job with immutable Cosign.
+- [x] Retain original evidence, bundles, manifest, and final decision without deploying or publishing.
 
 ## Task 5: Verify and document M05
 
@@ -99,10 +99,10 @@
 - Create: `docs/security/release-policy.md`
 - Create: `docs/roadmap/evidence/M05/verification.md`
 
-- [ ] Run release-policy, host, scanner, container, actionlint, zizmor, path-security, and tamper gates.
-- [ ] Record stable reason matrix and exact synthetic clean-decision hash.
-- [ ] Document decision use, trust boundaries, evidence retention, and hosted-signature limitation.
-- [ ] Mark local implementation complete while the real hosted eligible path remains pending.
+- [x] Run release-policy, host, scanner, container, actionlint, zizmor, path-security, and tamper gates.
+- [x] Record stable reason matrix and exact synthetic clean-decision hash.
+- [x] Document decision use, trust boundaries, evidence retention, and hosted-signature limitation.
+- [x] Mark local implementation complete while the real hosted eligible path remains pending.
 
 ## Completion gate
 
