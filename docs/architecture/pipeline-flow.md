@@ -1,79 +1,39 @@
 # Pipeline Flow
 
-M01 provides independent host and container validation. M02 adds normalized scanner policy. M03 binds SPDX and provenance to one reproducible OCI subject. M04 separates evidence production, OIDC signing, cryptographic verification, and identity-policy evaluation. M05 independently revalidates every evidence class before deciding eligibility. M06 packages the local contract for deterministic initialization and reusable validation. Dashed edges denote hosted execution or publication that remains unobserved.
+The PR workflow validates one candidate and independent policy contracts. Trusted default-branch workflows separately produce hosted attestations and signatures. Dashed edges below require hosted execution, which remains blocked by the observed account billing lock.
 
 ```mermaid
 flowchart TB
-  change[Source change] -->|triggers| ci[GitHub Actions validation]
-
-  subgraph baseline["M01 — validation baseline"]
-    direction TB
-    ci -->|runs| host[Host checks<br/>format · vet · tests · race · build]
-    ci -->|runs| container[Container checks<br/>build · health · smoke]
-    host -->|reports| m01[M01 validation result]
-    container -->|reports| m01
-  end
-
-  subgraph scanning["M02 — security control boundary"]
-    direction TB
-    m01 --> source[Source and workflow<br/>CodeQL · Gosec · Gitleaks · zizmor]
-    m01 --> dependency[Dependency and license<br/>govulncheck · OSV · Trivy]
-    m01 --> artifact[Infrastructure and image<br/>Trivy configuration · vulnerability]
-    source --> normalize[SARIF normalization]
-    dependency --> normalize
-    artifact --> normalize
-    normalize --> policy[Versioned security policy]
-    policy --> m02[M02 gate decision]
-  end
-
-  subgraph integrity["M03 — integrity evidence"]
-    direction TB
-    m02 --> oci[Reproducible OCI archive<br/>linux/amd64 · fixed epoch]
-    oci --> subject[Independent OCI parser<br/>manifest · config · layers]
-    oci --> syft[Syft SPDX 2.3<br/>final artifact inventory]
-    subject --> bind[Digest linkage verifier]
-    syft --> bind
-    provenance[SLSA Provenance v1<br/>source · builder · invocation] --> bind
-    bind --> m03[M03 verified evidence]
-  end
-
-  subgraph signing["M04 — isolated signing boundary"]
-    direction TB
-    m03 --> transfer[Bounded unsigned evidence<br/>no OIDC]
-    transfer -.-> signer[Hosted keyless signer<br/>OIDC · no checkout]
-    signer -.-> cosign[Cosign verification<br/>Fulcio · Rekor · SCT]
-    cosign -.-> identity[Exact identity observation]
-    fixtures[Local negative fixtures] --> signPolicy[Signing identity policy]
-    identity -.-> signPolicy
-    signPolicy --> m04[M04 policy decision]
-  end
-
-  subgraph release["M05 — complete release evidence"]
-    direction TB
-    m04 --> collect[Rooted evidence manifest<br/>paths · hashes · schemas]
-    m02 --> collect
-    m03 --> collect
-    collect --> verify[Independent release verifier<br/>tests · scans · OCI · SPDX · provenance]
-    verify --> bundles[Cosign bundles and<br/>exact signing identity]
-    bundles --> eligibility[Artifact-bound eligibility decision]
-  end
-
-  subgraph template["M06 — template and operations"]
-    direction TB
-    initialize[Fail-closed identity initializer] --> consumer[Detached clean consumer]
-    consumer --> reusable[Secret-free reusable validation]
-    reusable --> host
-    reusable --> source
-    reusable --> oci
-    reusable --> signPolicy
-    eligibility --> runbook[Release runbook checkpoint]
-    runbook -.-> published[Hosted immutable tag and release]
-  end
-
-  classDef currentNode fill:#e8f2ff,stroke:#2167ae,color:#102a43;
-  classDef planned fill:#f5f5f5,stroke:#777,stroke-dasharray:5 5,color:#333;
-  class ci,host,container,m01,source,dependency,artifact,normalize,policy,m02,oci,subject,syft,provenance,bind,m03,transfer,fixtures,signPolicy,m04,collect,verify,bundles,eligibility,initialize,consumer,reusable,runbook currentNode;
-  class signer,cosign,identity,published planned;
+  source[Clean source commit] --> host[Toolchain and source checks<br/>Unit tests, race tests, build]
+  host --> fixtures[Eight seeded scanner rejection fixtures]
+  fixtures --> oci[One reproducible OCI candidate<br/>linux/amd64, fixed epoch]
+  oci --> runtime[Run exact manifest digest<br/>Non-root, read-only, no capabilities]
+  oci --> imageScan[Export same manifest for Trivy<br/>No rebuild]
+  source --> sourceScan[Source, dependency, secret<br/>workflow, configuration, license scans]
+  sourceScan --> reports[Normalize reports<br/>Execution state, identity, timestamps]
+  imageScan --> reports
+  reports --> security[Versioned security policy]
+  oci --> inventory[SPDX and local SLSA provenance]
+  inventory --> linkage[Independently verify OCI<br/>manifest, config, layers, inventory]
+  runtime --> tests[Test summary<br/>Source and observed image digest]
+  tests --> statement[Complete validation statement]
+  security --> statement
+  linkage --> statement
+  statement -.-> signer[Hosted signer<br/>Four blobs, OIDC, no checkout]
+  signer -.-> sigstore[Fulcio, Rekor, SCT verification]
+  sigstore -.-> verifier[Separate no-OIDC release verifier]
+  statement --> local[Local positive and tamper fixtures<br/>Explicit signature test double]
+  local --> verifier
+  verifier --> decision{Artifact-bound eligibility}
+  decision -.-> release[Independent review<br/>Authorized immutable release]
+  source --> contracts[Policy rejection tests]
+  source --> docs[Workflow lint, local links<br/>Mermaid rendering]
+  source --> consumer[Detached lowercase and mixed-case consumers]
+  source -.-> codeql[Hosted CodeQL analysis]
 ```
 
-M02 scanners receive no repository credentials or Docker socket. M03's local generator requires a clean tree and grants no cloud credentials. M04 grants `id-token: write` only to a protected signer that downloads bounded evidence and never checks out source. M05 runs in a separate no-OIDC job, opens only hash-declared files below a bounded evidence root, and revalidates source reports instead of trusting summary booleans. M06's reusable workflow accepts no inputs or secrets and has no OIDC permission; repository-specific signing remains isolated. Local structure and failure policy are implemented. Fulcio, Rekor, certificate verification, hosted Scorecard results, tags, and releases remain pending.
+`ci.yml` calls the reusable workflow once. Its candidate, contract, and documentation jobs are all required. CodeQL and consumer initialization are separate PR checks. Scorecard, Provenance, and Signing are not PR-required checks because their triggers do not cover pull requests.
+
+Scanner containers receive no repository credentials or Docker socket. Source snapshots exclude ignored output and nested worktrees. Integrity generation requires a clean committed tree. Runtime tests and image scans use the same verified OCI manifest; the signed validation statement covers their evidence hashes. The verifier independently checks scanner identity/freshness, tests, OCI structure, SPDX, provenance, policy identities, and four signatures.
+
+Within `signing.yml`, the builder has no OIDC, the signer has no source checkout, and the release verifier has no OIDC. The separate platform-attestation workflow also requires OIDC. These boundaries reduce credential exposure but cannot prove that a compromised trusted builder reported the truth. Protected review and observed hosted evidence remain required before release.
