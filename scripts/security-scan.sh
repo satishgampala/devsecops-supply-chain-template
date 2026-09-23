@@ -3,6 +3,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+. "$ROOT/scripts/lib/toolchain.sh"
 REPORT_DIR=${REPORT_DIR:-"$ROOT/.local/security-reports/latest"}
 CACHE_DIR=${SECURITY_CACHE_DIR:-"$ROOT/.local/security-cache"}
 IMAGE=${IMAGE:-devsecops-supply-chain-template:local}
@@ -40,13 +41,22 @@ rm -f -- "$REPORT_DIR/decision.json"
 uid=$(id -u)
 gid=$(id -g)
 image_tar="$REPORT_DIR/application-image.tar"
+mkdir -p "$ROOT/.local"
+# Keep bind-mounted input under the checkout; macOS VM runtimes may not share
+# the host's private temporary directory.
+source_work=$(mktemp -d "$ROOT/.local/security-source.XXXXXX")
+SOURCE_DIR="$source_work/source"
 
 cleanup() {
+  rm -rf -- "$source_work"
   if [ -f "$image_tar" ]; then
     rm -f -- "$image_tar"
   fi
 }
 trap cleanup EXIT HUP INT TERM
+
+"$ROOT/scripts/check-toolchain.sh"
+"$ROOT/scripts/source-snapshot.sh" "$SOURCE_DIR"
 
 . "$ROOT/scripts/lib/scanner-runner.sh"
 
@@ -56,8 +66,8 @@ run_gosec() {
   rm -f -- "$REPORT_DIR/raw/gosec.json"
   gosec_status=0
   docker run --rm --user "$uid:$gid" \
-    -e GOCACHE=/tmp/gocache -e GOMODCACHE=/tmp/gomodcache \
-    --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" --workdir /src \
+    -e GOTOOLCHAIN="$GO_VERSION" -e GOCACHE=/tmp/gocache -e GOMODCACHE=/tmp/gomodcache \
+    --volume "$SOURCE_DIR:/src:ro" --volume "$REPORT_DIR:/reports" --workdir /src \
     "$GOSEC_IMAGE" \
     -track-suppressions -exclude-dir=testdata -severity medium -confidence medium \
     -fmt sarif -out /reports/raw/gosec.sarif -stdout -verbose json ./... >"$REPORT_DIR/raw/gosec.json" || gosec_status=$?
@@ -75,7 +85,7 @@ run_file_scan \
 run_stdout_scan \
   govulncheck "$GOVULNCHECK_REFERENCE" \
   "$REPORT_DIR/raw/govulncheck.sarif" "$REPORT_DIR/normalized/govulncheck.json" \
-  env GOTOOLCHAIN=go1.26.5 go run "$GOVULNCHECK_REFERENCE" -format sarif ./...
+  env GOTOOLCHAIN="$GO_VERSION" go run "$GOVULNCHECK_REFERENCE" -C "$SOURCE_DIR" -format sarif ./...
 
 run_file_scan \
   gitleaks "$GITLEAKS_IMAGE" \
@@ -90,14 +100,14 @@ run_stdout_scan \
   zizmor "$ZIZMOR_IMAGE" \
   "$REPORT_DIR/raw/zizmor.sarif" "$REPORT_DIR/normalized/zizmor.json" \
   docker run --rm --user "$uid:$gid" \
-    --volume "$ROOT:/repo:ro" "$ZIZMOR_IMAGE" \
+    --volume "$SOURCE_DIR:/repo:ro" "$ZIZMOR_IMAGE" \
     --offline --strict-collection --persona regular --format sarif --no-progress /repo
 
 run_file_scan \
   osv-scanner "$OSV_IMAGE" \
   "$REPORT_DIR/raw/osv-scanner.sarif" "$REPORT_DIR/normalized/osv-scanner.json" \
   docker run --rm --user "$uid:$gid" \
-    --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" \
+    --volume "$SOURCE_DIR:/src:ro" --volume "$REPORT_DIR:/reports" \
     "$OSV_IMAGE" scan source --format sarif \
     --output-file /reports/raw/osv-scanner.sarif --allow-no-lockfiles /src
 
@@ -105,14 +115,14 @@ run_file_scan \
   trivy-config "$TRIVY_IMAGE" \
   "$REPORT_DIR/raw/trivy-config.sarif" "$REPORT_DIR/normalized/trivy-config.json" \
   docker run --rm --user "$uid:$gid" \
-    --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" \
+    --volume "$SOURCE_DIR:/src:ro" --volume "$REPORT_DIR:/reports" \
     --volume "$CACHE_DIR/trivy:/cache" "$TRIVY_IMAGE" \
     --cache-dir /cache fs --scanners misconfig \
     --severity MEDIUM,HIGH,CRITICAL --exit-code 10 \
     --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git --skip-dirs /src/dist \
     --format sarif --output /reports/raw/trivy-config.sarif /src
 
-make container-build
+docker build --tag "$IMAGE" "$SOURCE_DIR"
 docker save --output "$image_tar" "$IMAGE"
 
 run_file_scan \
@@ -121,14 +131,14 @@ run_file_scan \
   docker run --rm --user "$uid:$gid" \
     --volume "$REPORT_DIR:/reports" --volume "$CACHE_DIR/trivy:/cache" \
     "$TRIVY_IMAGE" --cache-dir /cache image --input /reports/application-image.tar \
-    --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 10 \
+    --scanners vuln --severity HIGH,CRITICAL --exit-code 10 \
     --format sarif --output /reports/raw/trivy-image.sarif
 
 run_file_scan \
   trivy-license "$TRIVY_IMAGE" \
   "$REPORT_DIR/raw/trivy-license.sarif" "$REPORT_DIR/normalized/trivy-license.json" \
   docker run --rm --user "$uid:$gid" \
-    --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" \
+    --volume "$SOURCE_DIR:/src:ro" --volume "$REPORT_DIR:/reports" \
     --volume "$CACHE_DIR/trivy:/cache" "$TRIVY_IMAGE" \
     --cache-dir /cache fs --scanners license --license-full \
     --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --exit-code 10 \
@@ -136,7 +146,7 @@ run_file_scan \
     --format sarif --output /reports/raw/trivy-license.sarif /src
 
 docker run --rm "$TRIVY_IMAGE" --version >"$REPORT_DIR/metadata/trivy-version.txt"
-GOTOOLCHAIN=go1.26.5 go run "$GOVULNCHECK_REFERENCE" -version >"$REPORT_DIR/metadata/govulncheck-version.txt"
+GOTOOLCHAIN="$GO_VERSION" go run "$GOVULNCHECK_REFERENCE" -version >"$REPORT_DIR/metadata/govulncheck-version.txt"
 if [ -f "$CACHE_DIR/trivy/db/metadata.json" ]; then
   cp "$CACHE_DIR/trivy/db/metadata.json" "$REPORT_DIR/metadata/trivy-db.json"
 fi

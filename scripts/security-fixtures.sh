@@ -3,6 +3,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+. "$ROOT/scripts/lib/toolchain.sh"
 REPORT_DIR=${FIXTURE_REPORT_DIR:-"$ROOT/.local/security-fixtures/latest"}
 CACHE_DIR=${SECURITY_CACHE_DIR:-"$ROOT/.local/security-cache"}
 
@@ -57,12 +58,12 @@ test -s "$REPORT_DIR/gosec.sarif"
 grep -q '"ruleId": "G302"' "$REPORT_DIR/gosec.sarif"
 
 go -C testdata/security/dependencies mod download
-GOTOOLCHAIN=go1.26.5 go run "$GOVULNCHECK_REFERENCE" -C testdata/security/dependencies \
+GOTOOLCHAIN="$GO_VERSION" go run "$GOVULNCHECK_REFERENCE" -C testdata/security/dependencies \
   -format sarif ./... >"$REPORT_DIR/govulncheck.sarif"
 test -s "$REPORT_DIR/govulncheck.sarif"
 grep -q '"ruleId": "GO-2021-0113"' "$REPORT_DIR/govulncheck.sarif"
 expect_nonzero govulncheck \
-  env GOTOOLCHAIN=go1.26.5 go run "$GOVULNCHECK_REFERENCE" -C testdata/security/dependencies ./...
+  env GOTOOLCHAIN="$GO_VERSION" go run "$GOVULNCHECK_REFERENCE" -C testdata/security/dependencies ./...
 
 expect_nonzero gitleaks \
   docker run --rm --user "$uid:$gid" \

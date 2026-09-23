@@ -3,6 +3,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+. "$ROOT/scripts/lib/toolchain.sh"
 DIST_DIR=${DIST_DIR:-"$ROOT/dist"}
 PLATFORM=${PLATFORM:-linux/amd64}
 SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-0}
@@ -12,7 +13,6 @@ SUBJECT_NAME=${SUBJECT_NAME:-ghcr.io/satishgampala/devsecops-supply-chain-templa
 BUILD_TYPE=${BUILD_TYPE:-https://github.com/satishgampala/devsecops-supply-chain-template/buildtypes/container/v1}
 BUILDER_ID=${BUILDER_ID:-https://github.com/satishgampala/devsecops-supply-chain-template/builders/local-provenance-v1}
 INVOCATION_ID=${INVOCATION_ID:-local:$SOURCE_DIGEST}
-GO_VERSION=${GO_VERSION:-go1.26.5}
 MODULE_NAME=${MODULE_NAME:-github.com/satishgampala/devsecops-supply-chain-template}
 
 SYFT_IMAGE='docker.io/anchore/syft@sha256:b4f1df79f97b817682d8b5ff941eb6bfe74f6172553a5e312c75bbc2eabc405c'
@@ -37,6 +37,17 @@ if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=all)" ]; then
   exit 2
 fi
 
+if [ "$SOURCE_DIGEST" != "$(git -C "$ROOT" rev-parse HEAD)" ]; then
+  printf '%s\n' 'SOURCE_DIGEST must equal the checked-out commit' >&2
+  exit 2
+fi
+"$ROOT/scripts/check-toolchain.sh"
+source_work=$(mktemp -d "${TMPDIR:-/tmp}/integrity-source.XXXXXX")
+trap 'rm -rf -- "$source_work"' EXIT HUP INT TERM
+mkdir "$source_work/source"
+git -C "$ROOT" archive --format=tar --output="$source_work/source.tar" "$SOURCE_DIGEST"
+tar -C "$source_work/source" -xf "$source_work/source.tar"
+
 mkdir -p "$DIST_DIR"
 for name in \
   image.oci.tar \
@@ -50,6 +61,12 @@ do
   rm -f -- "$DIST_DIR/$name"
 done
 
+(
+  cd "$source_work/source"
+  go build -mod=readonly -o "$source_work/supply-chain" ./cmd/supply-chain
+)
+# Evidence paths are checked relative to the checkout by the verifier. Build
+# the verifier from the same committed snapshot, then execute it at that root.
 cd "$ROOT"
 
 docker buildx build \
@@ -57,7 +74,7 @@ docker buildx build \
   --provenance=false \
   --build-arg "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" \
   --output "type=oci,dest=$DIST_DIR/image.oci.tar" \
-  .
+  "$source_work/source"
 
 uid=$(id -u)
 gid=$(id -g)
@@ -70,11 +87,11 @@ docker run --rm \
   "oci-archive:/work/image.oci.tar" \
   --output 'spdx-json@2.3=/work/image.spdx.raw.json'
 
-go run ./cmd/supply-chain canonicalize \
+"$source_work/supply-chain" canonicalize \
   -input "$DIST_DIR/image.spdx.raw.json" \
   -output "$DIST_DIR/image.spdx.canonical.json"
 
-go run ./cmd/supply-chain provenance \
+"$source_work/supply-chain" provenance \
   -artifact "$DIST_DIR/image.oci.tar" \
   -output "$DIST_DIR/provenance.local.json" \
   -subject-name "$SUBJECT_NAME" \
@@ -85,7 +102,7 @@ go run ./cmd/supply-chain provenance \
   -invocation-id "$INVOCATION_ID" \
   -source-date-epoch "$SOURCE_DATE_EPOCH"
 
-go run ./cmd/supply-chain verify \
+"$source_work/supply-chain" verify \
   -artifact "$DIST_DIR/image.oci.tar" \
   -sbom "$DIST_DIR/image.spdx.raw.json" \
   -provenance "$DIST_DIR/provenance.local.json" \
@@ -120,5 +137,5 @@ printf '%s\n' \
     tooling.json >checksums.sha256
 )
 
-subject=$(go run ./cmd/supply-chain subject -artifact "$DIST_DIR/image.oci.tar")
+subject=$("$source_work/supply-chain" subject -artifact "$DIST_DIR/image.oci.tar")
 printf 'integrity evidence verified; subject=%s; output=%s\n' "$subject" "$DIST_DIR"

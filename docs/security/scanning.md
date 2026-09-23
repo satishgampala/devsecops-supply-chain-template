@@ -33,6 +33,8 @@ make security-scan
 
 This command requires Docker and network access to current advisory databases. It builds the application image, exports it as an archive, and scans the archive without mounting the Docker socket into a scanner container.
 
+Source scanners and the image build use a fresh snapshot of tracked files plus non-ignored new files. Ignored build output, local caches, and nested worktrees cannot contribute scanner findings or build inputs. Snapshot creation rejects symbolic links and stale output directories. Gitleaks separately scans the actual repository history. Seeded scanner fixtures remain excluded by their explicit paths.
+
 Run the isolated expected-failure suite:
 
 ```sh
@@ -90,3 +92,5 @@ Stable M02 reason codes are `required_scanner_missing`, `scanner_failed`, `block
 ## Advisory data and review cadence
 
 Live vulnerability results change as advisory databases are updated. The scan records available database timestamps, while deterministic fixtures test policy behavior without a live database. Review scanner references, policy, and exceptions with every update proposal and at least monthly. Never disable TLS verification, module authenticity, transparency checks, or scanner failure handling to make a gate pass.
+
+The `go.mod` toolchain directive selects the Go version for host checks, scanners, and Actions setup. A Go update must also update the digest-pinned Docker builder and `policy/release-v1.json` together. `make toolchain-check` rejects drift, including a Docker-only Dependabot update. Verify the image tag and digest against the upstream registry, run `make verify`, container smoke tests, and live scans, then regenerate integrity evidence. Historical milestone evidence and fixed synthetic unit-test versions describe their original inputs and are not maintenance pins.

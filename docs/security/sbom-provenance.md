@@ -16,7 +16,7 @@ M03 creates a deterministic local release candidate and verifies that its compon
 | `tooling.json` | Pinned generator and build parameters. |
 | `checksums.sha256` | SHA-256 checksums for the local evidence set. |
 
-The command refuses a dirty working tree. This prevents a statement for `HEAD` from describing uncommitted build inputs.
+The command refuses a dirty working tree and any `SOURCE_DIGEST` override that differs from `HEAD`. It builds an isolated `git archive` of that commit, so ignored files cannot enter the image. This prevents a statement for `HEAD` from describing different build inputs.
 
 ## OCI subject contract
 
@@ -24,7 +24,7 @@ The verifier reads the tar stream without extracting paths. It requires exactly 
 
 ## SPDX contract
 
-Syft 1.48.0 runs from a digest-pinned container against the final OCI archive. The semantic gate requires SPDX 2.3 identity, a unique root container package, unique package IDs, package metadata, the application module, and `stdlib` at `go1.26.5`. The root version and SHA-256 checksum must equal the independently derived OCI manifest digest.
+Syft 1.48.0 runs from a digest-pinned container against the final OCI archive. The semantic gate requires SPDX 2.3 identity, a unique root container package, unique package IDs, package metadata, the application module, and `stdlib` at `go1.26.8`. The root version and SHA-256 checksum must equal the independently derived OCI manifest digest.
 
 Syft intentionally emits a fresh `documentNamespace` and `creationInfo.created`. The raw document remains unchanged and standards-valid. Reproducibility compares a canonical projection that removes only those two fields and sorts unordered arrays. It does not substitute for the raw SBOM.
 

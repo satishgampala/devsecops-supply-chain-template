@@ -41,7 +41,7 @@ Changing a target to skip or soften a gate changes the caller's security contrac
 | `integrity` | `validation`, `security` | Artifact-bound OCI, SPDX, and provenance generation. | Explicit integrity evidence for 14 days |
 | `policy` | `integrity` | Signing identity and complete release-policy fixtures. | Check result |
 
-All jobs use ephemeral `ubuntu-24.04` runners, immutable action references, `persist-credentials: false`, fixed Go 1.26.5, bounded timeouts, and job-level `contents: read`.
+All jobs use ephemeral `ubuntu-24.04` runners, immutable action references, `persist-credentials: false`, the Go toolchain pinned in `go.mod`, bounded timeouts, and job-level `contents: read`.
 
 ## Failure behavior
 

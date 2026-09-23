@@ -5,7 +5,7 @@
   "sourceURI": "https://github.com/satishgampala/devsecops-supply-chain-template",
   "platform": "linux/amd64",
   "module": "github.com/satishgampala/devsecops-supply-chain-template",
-  "goVersion": "go1.26.5",
+  "goVersion": "go1.26.8",
   "provenanceBuildType": "https://github.com/satishgampala/devsecops-supply-chain-template/buildtypes/container/v1",
   "provenanceBuilderID": "https://github.com/satishgampala/devsecops-supply-chain-template/builders/local-provenance-v1",
   "sourceDateEpoch": 0,

@@ -5,7 +5,7 @@ This guide initializes a new repository with exact module, artifact, provenance,
 ## Prerequisites
 
 - Git, `jq`, Perl, and `shasum`;
-- Go 1.26.5 and GNU Make;
+- Go 1.26.8 and GNU Make;
 - Docker with BuildKit for scanner, container, and integrity checks; and
 - a clean working tree on a repository whose protected release branch will be `main`.
 

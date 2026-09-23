@@ -112,7 +112,7 @@ Detailed views remain versioned in the [C4 system context](docs/architecture/c4-
 
 ## Prerequisites
 
-- Go 1.26.5
+- Go 1.26.8
 - GNU Make
 - Docker with BuildKit for the container-only commands
 - Git

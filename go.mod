@@ -2,4 +2,4 @@ module github.com/satishgampala/devsecops-supply-chain-template
 
 go 1.26.0
 
-toolchain go1.26.5
+toolchain go1.26.8

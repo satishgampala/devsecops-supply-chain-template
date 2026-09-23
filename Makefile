@@ -6,6 +6,7 @@ GO ?= go
 GOFMT ?= gofmt
 DOCKER ?= docker
 CURL ?= curl
+export GOTOOLCHAIN := $(shell awk '$$1 == "toolchain" {print $$2}' go.mod)
 
 IMAGE ?= devsecops-supply-chain-template:local
 SMOKE_PORT ?= 18080
@@ -15,24 +16,19 @@ BINARY ?= $(BIN_DIR)/service
 GO_BUILD_FLAGS := -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w -buildid="
 DIGEST_RESPONSE := {"algorithm":"sha256","digest":"3f412634a4ea9da04b558d0e32b0062a692e41a1c1d10f0c5c707f14440392ce"}
 
-.PHONY: fmt fmt-check vet test test-race build verify container-build container-smoke security-test security-scan security-fixtures integrity integrity-repro signing-test release-policy-test template-test
+.PHONY: fmt fmt-check toolchain-check maintenance-test vet test test-race build verify container-build container-smoke security-test security-scan security-fixtures integrity integrity-repro signing-test release-policy-test template-test
 
 fmt:
-	@find . -type f -name '*.go' \
-		! -path './.git/*' \
-		! -path './$(BIN_DIR)/*' \
-		-exec $(GOFMT) -w {} +
+	@GOFMT=$(GOFMT) ./scripts/format-go.sh write
 
 fmt-check:
-	@set -eu; \
-	files="$$(find . -type f -name '*.go' \
-		! -path './.git/*' \
-		! -path './$(BIN_DIR)/*' \
-		-exec $(GOFMT) -l {} +)"; \
-	if [ -n "$$files" ]; then \
-		printf '%s\n' 'Go files require formatting:' "$$files"; \
-		exit 1; \
-	fi
+	@GOFMT=$(GOFMT) ./scripts/format-go.sh check
+
+toolchain-check:
+	./scripts/check-toolchain.sh
+
+maintenance-test:
+	./scripts/maintenance-fixtures.sh
 
 vet:
 	$(GO) vet ./...
@@ -48,6 +44,8 @@ build:
 	CGO_ENABLED=0 $(GO) build $(GO_BUILD_FLAGS) -o $(BINARY) ./cmd/service
 
 verify:
+	$(MAKE) toolchain-check
+	$(MAKE) maintenance-test
 	$(MAKE) fmt-check
 	$(MAKE) vet
 	$(MAKE) test
@@ -55,7 +53,7 @@ verify:
 	$(MAKE) build
 
 container-build:
-	$(DOCKER) build --tag $(IMAGE) .
+	DOCKER=$(DOCKER) IMAGE=$(IMAGE) ./scripts/container-build.sh
 
 container-smoke:
 	@set -eu; \
