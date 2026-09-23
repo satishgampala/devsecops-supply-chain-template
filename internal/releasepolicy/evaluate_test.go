@@ -25,11 +25,60 @@ func TestEvaluateAcceptsCompleteVerifiedEvidence(t *testing.T) {
 	if !decision.Eligible || len(decision.ReasonCodes) != 0 {
 		t.Fatalf("unexpected decision: %#v", decision)
 	}
-	if verifier.calls != 3 {
-		t.Fatalf("signature calls = %d, want 3", verifier.calls)
+	if verifier.calls != 4 {
+		t.Fatalf("signature calls = %d, want 4", verifier.calls)
 	}
-	if len(decision.Evidence) != 17 {
-		t.Fatalf("evidence summaries = %d, want 17", len(decision.Evidence))
+	if len(decision.Evidence) != 20 {
+		t.Fatalf("evidence summaries = %d, want 20", len(decision.Evidence))
+	}
+}
+
+func TestEvaluateRejectsRehashedTestEvidence(t *testing.T) {
+	fixture := newEvaluationFixture(t)
+	fixture.tests.Tests[0].Ref = "a different execution with no authenticated result"
+	fixture.manifest.Tests = fixture.writeJSON("tests.json", fixture.tests)
+	decision := fixture.evaluate(&fakeSignatureVerifier{version: fixture.policy.CosignVersion})
+	if decision.Eligible || !hasReason(decision, ReasonValidationMismatch) {
+		t.Fatalf("rewritten test evidence: eligible=%v, reasons=%v", decision.Eligible, decision.ReasonCodes)
+	}
+}
+
+func TestEvaluateRejectsReportLaunderingAndResealedEvidence(t *testing.T) {
+	fixture := newEvaluationFixture(t)
+	fixture.securityReports[0].Findings = []securityreport.Finding{{
+		Scanner: "gosec", Rule: "G999", Artifact: "main.go", Location: "main.go:1",
+		Severity: securityreport.SeverityHigh, Message: "blocking fixture", Remediation: "fix source",
+	}}
+	fixture.refreshSecurity()
+	fixture.refreshValidation()
+	verifier := fixture.boundVerifier()
+	if decision := fixture.evaluate(verifier); !hasReason(decision, ReasonVulnerabilityBlocking) {
+		t.Fatalf("baseline must block: %v", decision.ReasonCodes)
+	}
+
+	// An attacker edits a report, recomputes the aggregate decision, and updates
+	// every public checksum while preserving the original signed artifacts.
+	fixture.securityReports[0].Findings = []securityreport.Finding{}
+	fixture.refreshSecurity()
+	if decision := fixture.evaluate(verifier); decision.Eligible || !hasReason(decision, ReasonValidationMismatch) {
+		t.Fatalf("laundered report accepted: %v", decision.ReasonCodes)
+	}
+
+	// Rewriting the validation statement and signing observation must then fail
+	// the independent signature boundary, even though all checksums agree.
+	fixture.refreshValidation()
+	if decision := fixture.evaluate(verifier); decision.Eligible || !hasReason(decision, ReasonSignatureInvalid) {
+		t.Fatalf("rewritten authenticated statement accepted: %v", decision.ReasonCodes)
+	}
+}
+
+func TestEvaluateRejectsValidationFromAnotherTrigger(t *testing.T) {
+	fixture := newEvaluationFixture(t)
+	fixture.signingDecision.Identity.WorkflowTrigger = "workflow_dispatch"
+	fixture.manifest.Signing.Decision = fixture.writeJSON("signing-decision.json", fixture.signingDecision)
+	decision := fixture.evaluate(fixture.boundVerifier())
+	if decision.Eligible || !hasReason(decision, ReasonValidationMismatch) {
+		t.Fatalf("validation trigger mismatch accepted: %v", decision.ReasonCodes)
 	}
 }
 
@@ -134,15 +183,36 @@ type fakeSignatureVerifier struct {
 	versionError error
 	verifyError  error
 	calls        int
+	boundHashes  map[string]string
 }
 
 func (verifier *fakeSignatureVerifier) Version(context.Context) (string, error) {
 	return verifier.version, verifier.versionError
 }
 
-func (verifier *fakeSignatureVerifier) Verify(context.Context, SignatureRequest) error {
+func (verifier *fakeSignatureVerifier) Verify(_ context.Context, request SignatureRequest) error {
 	verifier.calls++
+	if verifier.boundHashes != nil {
+		content, err := os.ReadFile(request.ArtifactPath)
+		if err != nil {
+			return err
+		}
+		digest := sha256.Sum256(content)
+		if verifier.boundHashes[request.ArtifactPath] != hex.EncodeToString(digest[:]) {
+			return ErrSignatureVerification
+		}
+	}
 	return verifier.verifyError
+}
+
+// Pin accepted bytes before attacker mutations. This is a test double for the
+// signature boundary, not evidence of real Sigstore cryptographic verification.
+func (fixture *evaluationFixture) boundVerifier() *fakeSignatureVerifier {
+	verifier := &fakeSignatureVerifier{version: fixture.policy.CosignVersion, boundHashes: make(map[string]string)}
+	for _, artifact := range fixture.signingDecision.Artifacts {
+		verifier.boundHashes[filepath.Join(fixture.root, artifact.Path)] = artifact.SHA256
+	}
+	return verifier
 }
 
 type evaluationFixture struct {
@@ -246,6 +316,7 @@ func newEvaluationFixture(t *testing.T) *evaluationFixture {
 			{Role: "local-provenance", Path: provenanceRef.Path, Bundle: "provenance.local.sigstore.json"},
 			{Role: "oci-archive", Path: archiveRef.Path, Bundle: "image.oci.sigstore.json"},
 			{Role: "spdx-sbom", Path: sbomRef.Path, Bundle: "image.spdx.sigstore.json"},
+			{Role: "validation-evidence", Path: "validation-evidence.json", Bundle: "validation-evidence.sigstore.json"},
 		},
 	}
 	signingPolicy.Normalize()
@@ -275,6 +346,9 @@ func newEvaluationFixture(t *testing.T) *evaluationFixture {
 		},
 	}
 	for _, rule := range signingPolicy.RequiredArtifacts {
+		if rule.Role == "validation-evidence" {
+			continue
+		}
 		artifact := artifactRefs[rule.Role]
 		bundle := bundles[rule.Role]
 		fixture.signingDecision.Artifacts = append(fixture.signingDecision.Artifacts, signingpolicy.ArtifactObservation{
@@ -316,6 +390,7 @@ func newEvaluationFixture(t *testing.T) *evaluationFixture {
 		Integrity: IntegrityEvidence{SBOM: sbomRef, Provenance: provenanceRef, Verification: integrityRef},
 		Signing:   SigningEvidence{Policy: signingPolicyRef, Decision: signingDecisionRef},
 	}
+	fixture.refreshValidation()
 	fixture.expectedTime = evaluationTime
 	return fixture
 }
@@ -347,6 +422,31 @@ func (fixture *evaluationFixture) refreshSecurity() {
 	}
 	decision := securityreport.Evaluate(fixture.securityPolicy, fixture.securityReports, now)
 	fixture.manifest.Security.Decision = fixture.writeJSON("security-decision.json", decision)
+}
+
+// Produce a statement and observation without changing a verifier's previously
+// captured trusted hashes. Rewriting these files cannot authorize new bytes.
+func (fixture *evaluationFixture) refreshValidation() {
+	fixture.t.Helper()
+	statement := fixture.manifest.ValidationStatement(fixture.signingDecision.Identity.WorkflowTrigger)
+	ref := fixture.writeJSON("validation-evidence.json", statement)
+	fixture.manifest.Validation = ref
+	bundle := fixture.writeBytes("validation-evidence.sigstore.json", []byte("synthetic validation bundle"))
+	observation := signingpolicy.ArtifactObservation{
+		Role: "validation-evidence", Path: ref.Path, SHA256: ref.SHA256,
+		Bundle: bundle.Path, BundleSHA256: bundle.SHA256, Verified: true,
+	}
+	found := false
+	for index, artifact := range fixture.signingDecision.Artifacts {
+		if artifact.Role == observation.Role {
+			fixture.signingDecision.Artifacts[index] = observation
+			found = true
+		}
+	}
+	if !found {
+		fixture.signingDecision.Artifacts = append(fixture.signingDecision.Artifacts, observation)
+	}
+	fixture.manifest.Signing.Decision = fixture.writeJSON("signing-decision.json", fixture.signingDecision)
 }
 
 func (fixture *evaluationFixture) writeJSON(path string, value any) EvidenceRef {

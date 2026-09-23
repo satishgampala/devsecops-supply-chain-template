@@ -24,6 +24,11 @@
       "role": "spdx-sbom",
       "path": "image.spdx.raw.json",
       "bundle": "image.spdx.sigstore.json"
+    },
+    {
+      "role": "validation-evidence",
+      "path": "validation-evidence.json",
+      "bundle": "validation-evidence.sigstore.json"
     }
   ]
 }

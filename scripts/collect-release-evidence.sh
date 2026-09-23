@@ -2,6 +2,20 @@
 
 set -eu
 
+unsigned=false
+case "${1:-}" in
+  '') [ "$#" -eq 0 ] || exit 2 ;;
+  --unsigned) [ "$#" -eq 1 ] || exit 2; unsigned=true ;;
+  *) printf '%s\n' 'usage: collect-release-evidence.sh [--unsigned]' >&2; exit 2 ;;
+esac
+WORKFLOW_TRIGGER=${WORKFLOW_TRIGGER:-}
+if [ "$unsigned" = true ]; then
+  case "$WORKFLOW_TRIGGER" in
+    push|workflow_dispatch) ;;
+    *) printf '%s\n' 'unsigned validation requires an allowed WORKFLOW_TRIGGER' >&2; exit 2 ;;
+  esac
+fi
+
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 EVIDENCE_DIR=${EVIDENCE_DIR:-"$ROOT/.local/release-evidence"}
 INTEGRITY_DIR=${INTEGRITY_DIR:-"$ROOT/dist"}
@@ -42,7 +56,9 @@ TEST_SUMMARY=$(absolute_path "$TEST_SUMMARY")
 EVIDENCE_DIR=$(canonical_inside "$EVIDENCE_DIR" directory)
 INTEGRITY_DIR=$(canonical_inside "$INTEGRITY_DIR" directory)
 SECURITY_DIR=$(canonical_inside "$SECURITY_DIR" directory)
-SIGNING_DIR=$(canonical_inside "$SIGNING_DIR" directory)
+if [ "$unsigned" = false ]; then
+  SIGNING_DIR=$(canonical_inside "$SIGNING_DIR" directory)
+fi
 TEST_SUMMARY=$(canonical_inside "$TEST_SUMMARY" file)
 
 if [ "$EVIDENCE_DIR" = "$INTEGRITY_DIR" ] || [ "$EVIDENCE_DIR" = "$SECURITY_DIR" ] || [ "$EVIDENCE_DIR" = "$SIGNING_DIR" ]; then
@@ -64,7 +80,7 @@ for name in \
   image.oci.tar image.spdx.raw.json provenance.local.json verification.json \
   tests.json security-policy.json security-decision.json signing-policy.json \
   signing-decision.json image.oci.sigstore.json image.spdx.sigstore.json \
-  provenance.local.sigstore.json release-evidence.json
+  provenance.local.sigstore.json validation-evidence.json validation-evidence.sigstore.json release-evidence.json
 do
   rm -f -- "$EVIDENCE_DIR/$name"
 done
@@ -83,10 +99,14 @@ cp -- "$TEST_SUMMARY" "$EVIDENCE_DIR/tests.json"
 cp -- "$ROOT/policy/security-policy.json" "$EVIDENCE_DIR/security-policy.json"
 cp -- "$SECURITY_DIR/decision.json" "$EVIDENCE_DIR/security-decision.json"
 cp -- "$ROOT/policy/signing-identity.json" "$EVIDENCE_DIR/signing-policy.json"
-cp -- "$SIGNING_DIR/signing-decision.json" "$EVIDENCE_DIR/signing-decision.json"
-cp -- "$SIGNING_DIR/image.oci.sigstore.json" "$EVIDENCE_DIR/image.oci.sigstore.json"
-cp -- "$SIGNING_DIR/image.spdx.sigstore.json" "$EVIDENCE_DIR/image.spdx.sigstore.json"
-cp -- "$SIGNING_DIR/provenance.local.sigstore.json" "$EVIDENCE_DIR/provenance.local.sigstore.json"
+if [ "$unsigned" = false ]; then
+  cp -- "$SIGNING_DIR/signing-decision.json" "$EVIDENCE_DIR/signing-decision.json"
+  cp -- "$SIGNING_DIR/image.oci.sigstore.json" "$EVIDENCE_DIR/image.oci.sigstore.json"
+  cp -- "$SIGNING_DIR/image.spdx.sigstore.json" "$EVIDENCE_DIR/image.spdx.sigstore.json"
+  cp -- "$SIGNING_DIR/provenance.local.sigstore.json" "$EVIDENCE_DIR/provenance.local.sigstore.json"
+  cp -- "$SIGNING_DIR/validation-evidence.json" "$EVIDENCE_DIR/validation-evidence.json"
+  cp -- "$SIGNING_DIR/validation-evidence.sigstore.json" "$EVIDENCE_DIR/validation-evidence.sigstore.json"
+fi
 for scanner in $scanners
 do
   cp -- "$SECURITY_DIR/normalized/$scanner.json" "$EVIDENCE_DIR/security-reports/$scanner.json"
@@ -103,7 +123,19 @@ reports=$(
   done | jq --slurp '.'
 )
 
+signing_decision_hash=''
+validation_hash=''
+manifest_output="$EVIDENCE_DIR/validation-evidence.json"
+if [ "$unsigned" = false ]; then
+  signing_decision_hash=$(hash_file "$EVIDENCE_DIR/signing-decision.json")
+  validation_hash=$(hash_file "$EVIDENCE_DIR/validation-evidence.json")
+  manifest_output="$EVIDENCE_DIR/release-evidence.json"
+fi
+
 jq --null-input \
+  --arg unsigned "$unsigned" \
+  --arg trigger "$WORKFLOW_TRIGGER" \
+  --arg validation "$validation_hash" \
   --arg releasePolicy "$(hash_file "$ROOT/policy/release-v1.json")" \
   --arg evaluatedAt "$EVALUATION_TIME" \
   --arg name 'ghcr.io/satishgampala/devsecops-supply-chain-template' \
@@ -118,7 +150,7 @@ jq --null-input \
   --arg provenance "$(hash_file "$EVIDENCE_DIR/provenance.local.json")" \
   --arg integrity "$(hash_file "$EVIDENCE_DIR/verification.json")" \
   --arg signingPolicy "$(hash_file "$EVIDENCE_DIR/signing-policy.json")" \
-  --arg signingDecision "$(hash_file "$EVIDENCE_DIR/signing-decision.json")" \
+  --arg signingDecision "$signing_decision_hash" \
   --argjson reports "$reports" \
   '{
     schemaVersion: "1.0",
@@ -147,6 +179,11 @@ jq --null-input \
       policy: {path: "signing-policy.json", sha256: $signingPolicy},
       decision: {path: "signing-decision.json", sha256: $signingDecision}
     }
-  }' >"$EVIDENCE_DIR/release-evidence.json"
+  } | if $unsigned == "true" then
+    {schemaVersion, releasePolicySHA256, evaluationTime, artifact, tests, security, integrity,
+     signingPolicy: .signing.policy, workflowTrigger: $trigger}
+  else
+    . + {validation: {path: "validation-evidence.json", sha256: $validation}}
+  end' >"$manifest_output"
 
 printf 'release evidence collected; subject=%s; output=%s\n' "$subject" "$EVIDENCE_DIR"

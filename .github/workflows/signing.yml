@@ -26,6 +26,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -73,6 +74,20 @@ jobs:
               {id:"security-fixtures",state:"passed",ref:"make security-fixtures"}
             ]}' >release-build/tests.json
 
+      - name: Bind validation evidence before signing
+        env:
+          EVALUATION_TIME: ${{ steps.clock.outputs.evaluation_time }}
+          SOURCE_DIGEST: ${{ github.sha }}
+          WORKFLOW_TRIGGER: ${{ github.event_name }}
+        run: |
+          mkdir -p .local/unsigned-evidence
+          EVIDENCE_DIR="$PWD/.local/unsigned-evidence" \
+          SECURITY_DIR="$PWD/release-build/security" \
+          TEST_SUMMARY="$PWD/release-build/tests.json" \
+            ./scripts/collect-release-evidence.sh --unsigned
+          cp -- .local/unsigned-evidence/validation-evidence.json dist/validation-evidence.json
+          (cd dist && shasum -a 256 validation-evidence.json >>checksums.sha256)
+
       - name: Transfer unsigned evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -83,6 +98,7 @@ jobs:
             dist/image.spdx.canonical.json
             dist/provenance.local.json
             dist/verification.json
+            dist/validation-evidence.json
             dist/tooling.json
             dist/checksums.sha256
             release-build/tests.json
@@ -128,6 +144,7 @@ jobs:
           cosign sign-blob --yes --bundle staging/dist/image.oci.sigstore.json staging/dist/image.oci.tar
           cosign sign-blob --yes --bundle staging/dist/image.spdx.sigstore.json staging/dist/image.spdx.raw.json
           cosign sign-blob --yes --bundle staging/dist/provenance.local.sigstore.json staging/dist/provenance.local.json
+          cosign sign-blob --yes --bundle staging/dist/validation-evidence.sigstore.json staging/dist/validation-evidence.json
 
       - name: Verify cryptography and exact workflow identity
         env:
@@ -156,6 +173,7 @@ jobs:
           verify_bundle staging/dist/image.oci.tar staging/dist/image.oci.sigstore.json
           verify_bundle staging/dist/image.spdx.raw.json staging/dist/image.spdx.sigstore.json
           verify_bundle staging/dist/provenance.local.json staging/dist/provenance.local.sigstore.json
+          verify_bundle staging/dist/validation-evidence.json staging/dist/validation-evidence.sigstore.json
 
       - name: Record verified signing observation
         env:
@@ -184,6 +202,8 @@ jobs:
             --arg sbomBundle "$(hash_file staging/dist/image.spdx.sigstore.json)" \
             --arg provenance "$(hash_file staging/dist/provenance.local.json)" \
             --arg provenanceBundle "$(hash_file staging/dist/provenance.local.sigstore.json)" \
+            --arg validation "$(hash_file staging/dist/validation-evidence.json)" \
+            --arg validationBundle "$(hash_file staging/dist/validation-evidence.sigstore.json)" \
             '{
               schemaVersion: "1.0",
               issuer: $issuer,
@@ -199,7 +219,8 @@ jobs:
               artifacts: [
                 {role: "local-provenance", path: "provenance.local.json", sha256: $provenance, bundle: "provenance.local.sigstore.json", bundleSHA256: $provenanceBundle, verified: true},
                 {role: "oci-archive", path: "image.oci.tar", sha256: $archive, bundle: "image.oci.sigstore.json", bundleSHA256: $archiveBundle, verified: true},
-                {role: "spdx-sbom", path: "image.spdx.raw.json", sha256: $sbom, bundle: "image.spdx.sigstore.json", bundleSHA256: $sbomBundle, verified: true}
+                {role: "spdx-sbom", path: "image.spdx.raw.json", sha256: $sbom, bundle: "image.spdx.sigstore.json", bundleSHA256: $sbomBundle, verified: true},
+                {role: "validation-evidence", path: "validation-evidence.json", sha256: $validation, bundle: "validation-evidence.sigstore.json", bundleSHA256: $validationBundle, verified: true}
               ]
             }' >staging/dist/signing-observation.json
 
@@ -213,6 +234,8 @@ jobs:
             staging/dist/image.spdx.canonical.json
             staging/dist/provenance.local.json
             staging/dist/verification.json
+            staging/dist/validation-evidence.json
+            staging/dist/validation-evidence.sigstore.json
             staging/dist/tooling.json
             staging/dist/checksums.sha256
             staging/dist/image.oci.sigstore.json

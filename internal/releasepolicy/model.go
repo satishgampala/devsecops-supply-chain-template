@@ -28,6 +28,7 @@ const (
 	ReasonSignatureInvalid         = "SIGNATURE_INVALID"
 	ReasonSignatureMissing         = "SIGNATURE_MISSING"
 	ReasonToolUnavailable          = "TOOL_UNAVAILABLE"
+	ReasonValidationMismatch       = "VALIDATION_EVIDENCE_MISMATCH"
 	ReasonVulnerabilityBlocking    = "VULNERABILITY_BLOCKING"
 	ReasonWorkflowIdentityMismatch = "WORKFLOW_IDENTITY_MISMATCH"
 )
@@ -60,6 +61,30 @@ type Manifest struct {
 	Security            SecurityEvidence  `json:"security"`
 	Integrity           IntegrityEvidence `json:"integrity"`
 	Signing             SigningEvidence   `json:"signing"`
+	Validation          EvidenceRef       `json:"validation"`
+}
+
+// ValidationStatement authenticates all pre-signing evidence. Signature bundles
+// and the signing decision are excluded to avoid circular content hashes.
+type ValidationStatement struct {
+	SchemaVersion       string            `json:"schemaVersion"`
+	ReleasePolicySHA256 string            `json:"releasePolicySHA256"`
+	EvaluationTime      string            `json:"evaluationTime"`
+	Artifact            Artifact          `json:"artifact"`
+	Tests               EvidenceRef       `json:"tests"`
+	Security            SecurityEvidence  `json:"security"`
+	Integrity           IntegrityEvidence `json:"integrity"`
+	SigningPolicy       EvidenceRef       `json:"signingPolicy"`
+	WorkflowTrigger     string            `json:"workflowTrigger"`
+}
+
+func (manifest Manifest) ValidationStatement(trigger string) ValidationStatement {
+	return ValidationStatement{
+		SchemaVersion: manifest.SchemaVersion, ReleasePolicySHA256: manifest.ReleasePolicySHA256,
+		EvaluationTime: manifest.EvaluationTime, Artifact: manifest.Artifact,
+		Tests: manifest.Tests, Security: manifest.Security, Integrity: manifest.Integrity,
+		SigningPolicy: manifest.Signing.Policy, WorkflowTrigger: trigger,
+	}
 }
 
 type Artifact struct {
@@ -205,6 +230,7 @@ func (manifest Manifest) Validate() error {
 		manifest.Integrity.Verification,
 		manifest.Signing.Policy,
 		manifest.Signing.Decision,
+		manifest.Validation,
 	}
 	seenScannerIDs := make(map[string]struct{}, len(manifest.Security.Reports))
 	for _, report := range manifest.Security.Reports {

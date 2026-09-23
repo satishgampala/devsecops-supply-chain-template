@@ -113,5 +113,6 @@ func testManifest() Manifest {
 			Policy:   next("signing-policy.json"),
 			Decision: next("signing-decision.json"),
 		},
+		Validation: next("validation-evidence.json"),
 	}
 }

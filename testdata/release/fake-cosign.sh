@@ -53,3 +53,10 @@ do
 done
 [ -f "$bundle" ] || exit 1
 [ -f "$artifact" ] || exit 1
+
+# Freeze accepted artifact hashes outside the attacker-controlled evidence tree.
+# This models byte binding only; it is not a Sigstore signature implementation.
+[ -f "${FAKE_COSIGN_EXPECTATIONS:-}" ] || exit 2
+artifact_hash=$(shasum -a 256 "$artifact" | awk '{print $1}')
+jq --exit-status --arg name "$(basename "$artifact")" --arg hash "$artifact_hash" \
+  '.[$name] == $hash' "$FAKE_COSIGN_EXPECTATIONS" >/dev/null

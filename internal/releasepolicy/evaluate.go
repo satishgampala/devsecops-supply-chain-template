@@ -263,14 +263,24 @@ func (evaluation *evaluator) verifySigning() {
 		evaluation.invalidate("signing-decision", ReasonWorkflowIdentityMismatch)
 		return
 	}
+	var validation ValidationStatement
+	if !evaluation.json("validation", evaluation.manifest.Validation, ReasonSignatureMissing, &validation) {
+		evaluation.add(ReasonValidationMismatch)
+	} else if !reflect.DeepEqual(validation, evaluation.manifest.ValidationStatement(signingDecision.Identity.WorkflowTrigger)) {
+		evaluation.invalidate("validation", ReasonValidationMismatch)
+	}
 	artifactRefs := map[string]EvidenceRef{
-		"oci-archive":      evaluation.manifest.Artifact.Archive,
-		"spdx-sbom":        evaluation.manifest.Integrity.SBOM,
-		"local-provenance": evaluation.manifest.Integrity.Provenance,
+		"oci-archive":         evaluation.manifest.Artifact.Archive,
+		"spdx-sbom":           evaluation.manifest.Integrity.SBOM,
+		"local-provenance":    evaluation.manifest.Integrity.Provenance,
+		"validation-evidence": evaluation.manifest.Validation,
 	}
 	rules := make(map[string]signingpolicy.ArtifactRule, len(identityPolicy.RequiredArtifacts))
 	for _, rule := range identityPolicy.RequiredArtifacts {
 		rules[rule.Role] = rule
+	}
+	if len(rules) != len(artifactRefs) {
+		evaluation.add(ReasonSignatureMissing)
 	}
 	requests := make([]SignatureRequest, 0, len(signingDecision.Artifacts))
 	seen := make(map[string]struct{}, len(signingDecision.Artifacts))

@@ -251,7 +251,7 @@ The current contract is intentionally explicit:
 - an OIDC-only signing job separated from repository checkout and policy evaluation;
 - exact Fulcio issuer, certificate SAN, repository, workflow, ref, SHA, trigger, artifact, SCT, and transparency-log requirements;
 - a rooted, traversal-resistant evidence store with strict schemas, bounded reads, and SHA-256 checks;
-- a deterministic release verifier that re-evaluates tests, scanner reports, exceptions, OCI structure, SPDX, provenance, signing identity, and three Cosign bundles;
+- a deterministic release verifier that re-evaluates tests, scanner reports, exceptions, OCI structure, SPDX, provenance, signing identity, and four Cosign bundles;
 - a secret-free reusable validation workflow with deny-all top-level permissions and job-scoped read access;
 - a fail-closed initializer that rewrites exact identities and recalculates dependent policy hashes;
 - detached clean-consumer tests covering valid initialization and expected failure; and

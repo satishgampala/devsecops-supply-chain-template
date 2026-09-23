@@ -18,6 +18,7 @@ Commits are authorized. Pushes, pull requests, repository-setting changes, tags,
 
 - Completed corrective commit: scanner reliability (`86e70f7`); the live gate still found vulnerable toolchain code and ignored-worktree contamination.
 - Verified: coordinated toolchain maintenance and isolated source inputs; live scanner gate and clean-fixture reproducibility pass.
-- Working: artifact/evidence binding.
+- Verified: authenticated validation statements and rejection of rehashed test/scanner evidence with unit and clean CLI fixtures.
+- Working: exact candidate test/scan binding and scanner identity/freshness enforcement.
 - Pending: remaining artifact/evidence binding, adoption/maintenance, portfolio demonstration, complete validation.
 - External: hosted execution, repository protections, and publication.

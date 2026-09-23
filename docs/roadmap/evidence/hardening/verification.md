@@ -26,8 +26,21 @@ Scope: corrective working tree following `86e70f7`.
 
 These checks prove source isolation and coordinated toolchain behavior. They do not yet prove that the release workflow signs the exact candidate tested by its earlier stages.
 
+## Authenticated validation evidence — 2026-09-23
+
+Scope: corrective working tree following `317fba9`.
+
+- The new regression first demonstrated that rewritten test evidence with a recalculated manifest hash was accepted by the previous verifier.
+- The signing policy now requires a fourth blob, `validation-evidence.json`. Its signed content covers every pre-signing manifest field, including test and scanner hashes, source and subject identities, policy digests, evaluation time, and trigger. The signer still has no checkout; the builder has no OIDC permission. Signing checkout now fetches complete history for Gitleaks.
+- Unit regressions reject changed test references, laundered blocking findings, rewritten validation statements, and mismatched triggers. The positive fixture requires four independent signature-verifier calls.
+- A clean temporary Git repository passed `make release-policy-test` and `make signing-test`. CLI decisions were: clean `eligible: true`; rehashed tests `VALIDATION_EVIDENCE_MISMATCH`; rewritten signed statement `SIGNATURE_INVALID`. The test-only Cosign substitute freezes accepted hashes outside the evidence directory. It models byte binding and does not prove real Sigstore cryptography.
+- `make verify`, both documented/current Actionlint checks, container build/smoke, shell syntax, local Markdown links, and high-confidence secret checks passed. Existing Mermaid diagrams were unchanged.
+- Live eight-scanner gate passed at `.local/security-reports/validation-binding/`, with zero blocking findings and the pre-existing accepted exception.
+
+Real hosted signatures remain unverified. Exact candidate test/scan binding and scanner identity/freshness validation remain the next controls.
+
 ## Remaining work
 
-Artifact/test/scan binding, complete evidence authentication, scanner identity/freshness enforcement, initializer case handling, CI consolidation, consumer CI, portfolio documentation, and final integrated validation remain pending under the [implementation plan](../../implementation-plans/2026-09-23-portfolio-hardening.md).
+Artifact/test/scan binding, scanner identity/freshness enforcement, initializer case handling, CI consolidation, consumer CI, portfolio documentation, and final integrated validation remain pending under the [implementation plan](../../implementation-plans/2026-09-23-portfolio-hardening.md).
 
 Hosted execution remains blocked by the observed GitHub account billing lock. Repository protections and publication remain separate, unverified remote gates.

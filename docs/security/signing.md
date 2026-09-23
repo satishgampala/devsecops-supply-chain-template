@@ -22,9 +22,9 @@ Wildcards, pull-request triggers, feature refs, unknown fields, trailing JSON, d
 
 The `build` job has `contents: read`, checks out source without persisted credentials, runs M03 integrity generation, and uploads an explicit file set. It has no OIDC permission.
 
-The dependent `sign` job has only `actions: read` and `id-token: write`. It runs only for the default branch on `push` or `workflow_dispatch`, downloads the bounded evidence set, checks its M03 checksums, installs immutable Cosign 3.1.2, and never checks out source. It signs the OCI archive, raw SPDX document, and local provenance as separate blobs.
+The dependent `sign` job has only `actions: read` and `id-token: write`. It runs only for the default branch on `push` or `workflow_dispatch`, downloads the bounded evidence set, checks its M03 checksums, installs immutable Cosign 3.1.2, and never checks out source. It signs the OCI archive, raw SPDX document, local provenance, and complete validation statement as separate blobs.
 
-Each bundle is immediately passed to `cosign verify-blob` with exact certificate identity, issuer, workflow name, repository, ref, SHA, and trigger flags. Neither transparency-log verification nor embedded SCT verification is disabled. A fixed shell step records hashes and claims only after all three commands succeed.
+Each bundle is immediately passed to `cosign verify-blob` with exact certificate identity, issuer, workflow name, repository, ref, SHA, and trigger flags. Neither transparency-log verification nor embedded SCT verification is disabled. A fixed shell step records hashes and claims only after all four commands succeed.
 
 The final `policy` job has no OIDC permission. It checks out the standard-library verifier, compares the observation against the versioned policy and exact workflow SHA, then emits a deterministic decision.
 
@@ -35,8 +35,11 @@ The final `policy` job has no OIDC permission. It checks out the standard-librar
 | OCI archive | `image.oci.tar` | `image.oci.sigstore.json` |
 | SPDX SBOM | `image.spdx.raw.json` | `image.spdx.sigstore.json` |
 | Local provenance | `provenance.local.json` | `provenance.local.sigstore.json` |
+| Validation evidence | `validation-evidence.json` | `validation-evidence.sigstore.json` |
 
 The OCI archive signature binds its archive-file SHA-256. M03 separately binds the archive contents, SPDX root, and provenance subject to the OCI manifest digest. M05 must require both relationships. GitHub artifact attestations are already signed DSSE statements; M04 does not wrap those platform signatures in another Cosign signature.
+
+The validation statement binds the source commit, OCI identity, test summary, normalized scanner reports, security decision, integrity result, all policy digests, evaluation time, and workflow trigger. It excludes signature bundles and the signing decision to avoid circular hashes. The release verifier compares the statement with the assembled manifest before requiring its independent Cosign signature. Recalculating evidence hashes cannot authorize substituted test or scanner results.
 
 ## Local and hosted evidence
 
