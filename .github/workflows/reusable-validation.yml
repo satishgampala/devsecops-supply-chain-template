@@ -4,48 +4,22 @@ on:
   workflow_call:
     outputs:
       subject-digest:
-        description: Verified OCI manifest digest
-        value: ${{ jobs.integrity.outputs.subject-digest }}
+        description: OCI manifest digest tested and scanned by candidate validation
+        value: ${{ jobs.candidate.outputs.subject-digest }}
 
 permissions: {}
 
 jobs:
-  validation:
-    name: Host and container validation
+  candidate:
+    name: Candidate validation
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
+    outputs:
+      subject-digest: ${{ steps.subject.outputs.digest }}
     permissions:
       contents: read
     steps:
-      - name: Check out caller repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-          check-latest: false
-          cache: false
-
-      - name: Verify host behavior
-        run: make verify
-
-      - name: Build container
-        run: make container-build
-
-      - name: Verify restricted container behavior
-        run: make container-smoke
-
-  security:
-    name: Security policy
-    runs-on: ubuntu-24.04
-    timeout-minutes: 40
-    permissions:
-      contents: read
-    steps:
-      - name: Check out caller history
+      - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -58,90 +32,43 @@ jobs:
           check-latest: false
           cache: false
 
-      - name: Fix policy evaluation time
-        id: clock
-        run: printf 'evaluation_time=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"$GITHUB_OUTPUT"
-
-      - name: Verify scanner failure fixtures
-        run: make security-fixtures
-
-      - name: Run layered scanner gate
-        env:
-          EVALUATION_TIME: ${{ steps.clock.outputs.evaluation_time }}
-          REPORT_DIR: .local/security-reports/reusable
-        run: make security-scan
-
-      - name: Retain scanner evidence
-        if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Set up Docker with the containerd image store
+        uses: docker/setup-docker-action@2bf61fb9464cc67f0cbdeabed6aa0380accd1c70 # v5.5.0
         with:
-          name: reusable-security-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .local/security-reports/reusable
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 14
+          version: v29.5.2
+          daemon-config: '{"features":{"containerd-snapshotter":true}}'
 
-  integrity:
-    name: Integrity evidence
-    needs:
-      - validation
-      - security
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    outputs:
-      subject-digest: ${{ steps.subject.outputs.digest }}
-    permissions:
-      contents: read
-    steps:
-      - name: Check out caller repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+      - name: Test and scan one immutable candidate
+        run: make candidate
 
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-          check-latest: false
-          cache: false
-
-      - name: Generate verified integrity evidence
-        run: make integrity
-
-      - name: Derive immutable OCI subject
+      - name: Export validated subject
         id: subject
         run: |
-          digest="$(go run ./cmd/supply-chain subject -artifact dist/image.oci.tar)"
+          digest="$(jq -er '.subjectDigest' dist/tests.json)"
           printf '%s' "$digest" | grep --extended-regexp --quiet '^sha256:[0-9a-f]{64}$'
           printf 'digest=%s\n' "$digest" >>"$GITHUB_OUTPUT"
 
-      - name: Retain integrity evidence
+      - name: Retain candidate evidence
+        if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: reusable-integrity-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            dist/image.oci.tar
-            dist/image.spdx.raw.json
-            dist/image.spdx.canonical.json
-            dist/provenance.local.json
-            dist/verification.json
-            dist/tooling.json
-            dist/checksums.sha256
+          name: candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/
           if-no-files-found: error
           retention-days: 14
 
-  policy:
-    name: Signing and release contracts
-    needs: integrity
+  contracts:
+    name: Policy contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
     steps:
-      - name: Check out caller repository
+      - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -150,8 +77,28 @@ jobs:
           check-latest: false
           cache: false
 
-      - name: Verify signing identity policy
-        run: make signing-test
+      - name: Verify scanner, signing, and release rejection contracts
+        run: make security-test signing-test release-policy-test
 
-      - name: Verify release evidence policy
-        run: make release-policy-test
+  lint:
+    name: Workflow and documentation checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          check-latest: false
+          cache: false
+
+      - name: Validate all workflows and local documentation
+        run: make workflow-check docs-check

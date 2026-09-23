@@ -14,7 +14,7 @@ C4Container
     Container(service, "Reference service", "Static Go binary in scratch", "Serves health and bounded digest endpoints")
     Container(validation, "Reusable validation workflow", "GitHub Actions", "Runs host, container, scanner, integrity, and policy gates")
     Container(builder, "Evidence builder", "Go, BuildKit, Syft", "Produces OCI, SPDX, provenance, reports, and checksums")
-    Container(signer, "Keyless signer", "Cosign on GitHub Actions", "Signs three bounded blobs without source checkout")
+    Container(signer, "Keyless signer", "Cosign on GitHub Actions", "Signs four bounded blobs without source checkout")
     Container(verifier, "Release verifier", "Go CLI and Cosign", "Revalidates every evidence class and emits eligibility")
   }
 
@@ -37,4 +37,4 @@ C4Container
   UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 ```
 
-Only the protected signer receives `id-token: write`; it does not check out source. Reusable validation receives no secrets or OIDC. The release verifier runs in a separate no-OIDC job and treats transferred artifacts as untrusted until path, hash, schema, identity, and cryptographic checks pass.
+Within the signing workflow, only the protected signer receives `id-token: write`; it does not check out source. The separate provenance and Scorecard workflows also use OIDC for their hosted attestations or results. Reusable validation receives no secrets or OIDC. The release verifier runs in a separate no-OIDC job and treats transferred artifacts as untrusted until path, hash, schema, identity, and cryptographic checks pass.

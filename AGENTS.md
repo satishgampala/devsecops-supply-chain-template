@@ -67,7 +67,7 @@ Run the smallest relevant checks during implementation, then run the full gate b
 ```sh
 make verify
 go test -race -count=1 ./...
-go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 .github/workflows/ci.yml
+make workflow-check docs-check
 make container-build
 make container-smoke
 git diff --check

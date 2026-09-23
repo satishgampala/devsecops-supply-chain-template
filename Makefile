@@ -15,7 +15,7 @@ BINARY ?= $(BIN_DIR)/service
 
 GO_BUILD_FLAGS := -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w -buildid="
 
-.PHONY: fmt fmt-check toolchain-check maintenance-test vet test test-race build verify candidate container-build container-smoke security-test security-scan security-fixtures integrity integrity-repro signing-test release-policy-test template-test
+.PHONY: workflow-check docs-check fmt fmt-check toolchain-check maintenance-test vet test test-race build verify candidate container-build container-smoke security-test security-scan security-fixtures integrity integrity-repro signing-test release-policy-test template-test
 
 fmt:
 	@GOFMT=$(GOFMT) ./scripts/format-go.sh write
@@ -86,3 +86,9 @@ release-policy-test:
 
 template-test:
 	./scripts/template-fixtures.sh
+
+workflow-check:
+	$(GO) run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 -shellcheck= .github/workflows/*.yml
+
+docs-check:
+	./scripts/check-docs.sh

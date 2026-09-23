@@ -51,8 +51,18 @@ Scope: corrective working tree following `131b389`.
 - Final `make verify security-test`, Actionlint 1.7.7 on `ci.yml` and 1.7.12 on all workflows, development container build/smoke, shell syntax, local Markdown links, and high-confidence secret checks passed. Existing Mermaid diagrams were unchanged.
 - Source-selection fixtures additionally cover unstaged tracked-file deletions and reject formatting through symlinks. Seeded scanner runs clear previous SARIF output before invocation.
 
+## Adoption and CI maintenance — 2026-09-23
+
+Scope: corrective working tree following `090fa07`.
+
+- A regression reproduced mixed-case repository rejection. Signing policy now accepts valid uppercase characters while retaining exact, case-sensitive identity comparisons. Lowercase `example-org/secure-service` and mixed-case `ExampleOrg/Secure-Service` consumers both pass initialization, host/race checks, signing contracts, release fixtures, and deliberate invalid-identity/source rejection. OCI artifact names remain lowercase.
+- `ci.yml` calls reusable candidate validation once; the duplicate Security scanner job is removed, while independent CodeQL remains. Reusable jobs cover candidate evidence, policy rejection contracts, and workflow/documentation checks. The consumer workflow now runs `make template-test`. Adopted repositories use that target to validate current contracts without reinitialization.
+- `make workflow-check` passes Actionlint 1.7.12 across all seven workflows. Offline zizmor 1.27.0 reports zero findings. Workflow permissions remain explicit; PR jobs receive no OIDC or secrets. Docker 29.5.2 with the containerd image store is configured where digest-addressable runtime checks are required.
+- `make docs-check` uses registry-verified immutable Lychee 0.24.2 and Mermaid CLI 11.12.0 images. Local links/fragments and diagram rendering pass; temporary broken-link and invalid-Mermaid probes each cause nonzero failure. External URLs are intentionally excluded. Required-check guidance no longer requires the default-branch-only Scorecard job on PRs.
+- `make verify security-test`, development container build/smoke, shell syntax, proposed-source Gitleaks scan, and whitespace checks pass. Consumer evidence remains under ignored `.local/template-fixtures.CohLeU/`.
+
 ## Remaining work
 
-Initializer case handling, CI consolidation, consumer CI, portfolio documentation, and final integrated validation remain pending under the [implementation plan](../../implementation-plans/2026-09-23-portfolio-hardening.md).
+Portfolio demonstration and final integrated validation remain pending under the [implementation plan](../../implementation-plans/2026-09-23-portfolio-hardening.md).
 
 Hosted execution remains blocked by the observed GitHub account billing lock. Repository protections and publication remain separate, unverified remote gates.

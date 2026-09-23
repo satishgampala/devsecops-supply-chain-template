@@ -18,6 +18,25 @@ func TestEvaluateAcceptsExactIdentityAndArtifacts(t *testing.T) {
 	}
 }
 
+func TestMixedCaseRepositoryPreservesExactIdentity(t *testing.T) {
+	policy := validPolicy()
+	policy.Repository = "ExampleOrg/Secure-Service"
+	policy.CertificateIdentity = "https://github.com/" + policy.Repository + "/.github/workflows/signing.yml@refs/heads/main"
+	if err := policy.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	observation := validObservation()
+	observation.Repository = policy.Repository
+	observation.CertificateIdentity = policy.CertificateIdentity
+	if decision := Evaluate(policy, observation, observation.WorkflowSHA); !decision.Eligible {
+		t.Fatalf("exact mixed-case identity rejected: %v", decision.ReasonCodes)
+	}
+	observation.Repository = strings.ToLower(policy.Repository)
+	if decision := Evaluate(policy, observation, observation.WorkflowSHA); decision.Eligible || !contains(decision.ReasonCodes, ReasonRepositoryMismatch) {
+		t.Fatalf("case-altered identity accepted: %v", decision.ReasonCodes)
+	}
+}
+
 func TestEvaluateRejectsEveryIdentityAndEvidenceMismatch(t *testing.T) {
 	tests := []struct {
 		name   string

@@ -16,10 +16,20 @@ Source files cannot prove remote repository settings. Apply and independently in
 - require at least one approval and code-owner review;
 - dismiss stale approvals and require approval of the most recent reviewable push;
 - require branches to be current before merge;
-- require CI, Security, Template Self-Test, and other designated status checks;
+- require candidate validation, policy contracts, workflow/documentation checks, CodeQL, and consumer initialization;
 - block force pushes and branch deletion;
 - require conversation resolution; and
 - restrict bypass to documented emergency operators.
+
+Select the exact check names emitted by a successful pull-request run. With the current workflow job names, expect:
+
+- `Supply-chain validation / Candidate validation`;
+- `Supply-chain validation / Policy contracts`;
+- `Supply-chain validation / Workflow and documentation checks`;
+- `CodeQL`; and
+- `Consumer initialization`.
+
+Confirm these names on GitHub before configuring them; a required name that never runs blocks merges. Do not require Scorecard, Provenance, or Signing on pull requests: those workflows run after trusted default-branch pushes or on their scheduled/manual triggers.
 
 Rules for release tags should prevent update and deletion after creation.
 

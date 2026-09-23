@@ -6,7 +6,7 @@ This guide initializes a new repository with exact module, artifact, provenance,
 
 - Git, `jq`, Perl, and `shasum`;
 - Go 1.26.8 and GNU Make;
-- Docker with BuildKit for scanner, container, and integrity checks; and
+- Docker 29.5.2 with BuildKit and the containerd image store; and
 - a clean working tree on a repository whose protected release branch will be `main`.
 
 The initializer is intentionally one-time and fail-closed. It refuses malformed identities, a dirty tree, an already initialized policy, or a repository whose expected template values are missing.
@@ -54,21 +54,18 @@ test "$(jq -r '.signingPolicySHA256' policy/release-v1.json)" = "$signing_sha"
 Commit the reviewed identity changes so integrity generation sees a clean source revision, then run:
 
 ```sh
-make verify
-make container-build
-make container-smoke
-make security-fixtures
-make security-scan
+make workflow-check docs-check
+make candidate
 make integrity-repro
 make signing-test
 make release-policy-test
 ```
 
-Before initialization, `make template-test` independently exercises the one-time initializer in a detached temporary repository. It also proves malformed initialization and a seeded Go source defect fail. Do not rerun that template-only fixture after initialization; use the verification commands above in the initialized repository.
+Before initialization, `make template-test` initializes two detached consumers, including mixed-case GitHub identities, then verifies their host and policy contracts. It proves malformed initialization and a seeded Go defect fail. After initialization, the same target verifies the adopted repository’s signing and release contracts without rerunning the one-time initializer. GitHub repository and certificate identities retain their exact case; OCI registry paths remain lowercase.
 
 ## 3. Call reusable validation
 
-The included `template-self-test.yml` calls the reusable workflow from the same repository. A separate public repository can pin the upstream reusable workflow to its immutable commit:
+The included `ci.yml` calls reusable validation from the same repository. `template-self-test.yml` runs the consumer fixtures. Keep the local workflow call when adopting the complete template:
 
 ```yaml
 name: Supply-Chain Validation
@@ -85,7 +82,7 @@ jobs:
   supply-chain:
     permissions:
       contents: read
-    uses: satishgampala/devsecops-supply-chain-template/.github/workflows/reusable-validation.yml@816827051b7fc4963c5d880b1ad86668f29bf135
+    uses: ./.github/workflows/reusable-validation.yml
 ```
 
 The caller must contain the documented [Make interface](../reference/reusable-workflow.md). Do not pass `secrets: inherit`; the workflow defines no secret interface and requires no OIDC.
@@ -97,7 +94,7 @@ Repository-hosted settings are not created by source files. Before treating `mai
 - require pull requests and at least one independent approval;
 - require code-owner review for workflow, policy, script, and verifier changes;
 - dismiss stale approvals and require approval of the most recent push;
-- require current CI, Security, Template Self-Test, and Scorecard checks;
+- require the PR checks listed in the [repository settings baseline](../operations/repository-settings.md);
 - block force pushes and branch deletion; and
 - enable Dependabot alerts, security updates, secret scanning, and push protection where available.
 

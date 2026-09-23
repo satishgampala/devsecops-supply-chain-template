@@ -14,18 +14,16 @@ Contributions that improve the reference service, supply-chain controls, evidenc
 Required tools are listed in the [README](README.md). Run the smallest relevant check while developing, then run:
 
 ```sh
-make verify
-make container-build
-make container-smoke
-make security-fixtures
-make security-scan
+make workflow-check docs-check
+make security-test
+make candidate
 make integrity-repro
 make signing-test
 make release-policy-test
 make template-test
 ```
 
-Also run Actionlint and the digest-pinned zizmor command documented in the current milestone evidence when changing any workflow.
+`make candidate`, integrity generation, and release fixtures require a clean committed revision. Candidate validation runs host and race checks, scanner rejection fixtures, and smoke tests and live scans against one OCI image. `make workflow-check` lints every workflow with Actionlint 1.7.12. `make docs-check` validates local Markdown links and fragments and renders Mermaid diagrams using digest-pinned tools. External URLs are excluded from this deterministic gate.
 
 ## Change expectations
 

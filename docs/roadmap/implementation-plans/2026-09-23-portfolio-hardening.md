@@ -20,6 +20,6 @@ Commits are authorized. Pushes, pull requests, repository-setting changes, tags,
 - Verified: coordinated toolchain maintenance and isolated source inputs; live scanner gate and clean-fixture reproducibility pass.
 - Verified: authenticated validation statements and rejection of rehashed test/scanner evidence with unit and clean CLI fixtures.
 - Verified: one candidate across runtime tests and scans, exact scanner references, and report/database freshness enforcement.
-- Working: initializer case handling, consolidated CI, and actual consumer initialization in CI.
-- Pending: remaining adoption/maintenance, portfolio demonstration, complete validation.
+- Verified locally: initializer case handling, consolidated CI, consumer fixtures, workflow lint, and documentation checks. Hosted execution remains unverified.
+- Working: portfolio demonstration and complete validation.
 - External: hosted execution, repository protections, and publication.

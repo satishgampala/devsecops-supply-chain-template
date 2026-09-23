@@ -41,11 +41,8 @@ git rev-parse --verify "refs/tags/$version" >/dev/null 2>&1 && exit 1
 ## 2. Reproduce local controls
 
 ```sh
-make verify
-make container-build
-make container-smoke
-make security-fixtures
-make security-scan
+make workflow-check docs-check
+make candidate
 make integrity-repro
 make signing-test
 make release-policy-test
@@ -68,7 +65,7 @@ For the Signing run:
 
 1. verify `checksums.sha256`;
 2. inspect the signing observation and signing-policy decision;
-3. rerun `cosign verify-blob` for the OCI archive, raw SPDX document, and local provenance using every exact issuer and GitHub workflow flag from `policy/signing-identity.json`;
+3. rerun `cosign verify-blob` for the OCI archive, raw SPDX document, local provenance, and complete validation statement using every exact issuer and GitHub workflow flag from `policy/signing-identity.json`;
 4. rerun `cmd/releaseverify` against the retained evidence root and recorded evaluation time; and
 5. confirm the final decision names the expected source SHA, artifact, manifest digest, release-policy hash, and no reason codes.
 
@@ -115,7 +112,7 @@ Do not upload temporary credentials, raw environment output, scanner caches, or 
 In a clean directory:
 
 1. download the release assets;
-2. verify checksums and three Sigstore bundles;
+2. verify checksums and four Sigstore bundles;
 3. compare the release tag SHA, decision source SHA, provenance source digest, and OCI subject;
 4. inspect the SPDX subject and package inventory; and
 5. record the release URL, workflow URLs, Rekor entries, decision hash, and independent verification result.

@@ -258,7 +258,7 @@ func validRepository(value string) bool {
 			return false
 		}
 		for _, character := range part {
-			if !(character >= 'a' && character <= 'z') && !(character >= '0' && character <= '9') && character != '-' && character != '_' && character != '.' {
+			if !(character >= 'a' && character <= 'z') && !(character >= 'A' && character <= 'Z') && !(character >= '0' && character <= '9') && character != '-' && character != '_' && character != '.' {
 				return false
 			}
 		}
