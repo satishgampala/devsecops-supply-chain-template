@@ -5,7 +5,8 @@ The roadmap and milestone implementation plans remain the technical source of tr
 
 ## Communication protocol
 
-- Use full token-efficient communication for all progress updates, plans, reviews, research summaries, and handoffs.
+- Use the repository-local [caveman skill](.agents/skills/caveman/SKILL.md) in `ultra` mode for all responses, progress updates, plans, reviews, research summaries, and handoffs.
+- Apply the repository-local [karpathy-guidelines skill](.agents/skills/karpathy-guidelines/SKILL.md) when writing, reviewing, or refactoring code.
 - Remove filler, repeated summaries, decorative formatting, and routine tool narration while preserving technical substance, evidence, paths, commands, and exact errors.
 - Use normal clear prose for security warnings, destructive actions, ambiguous ordering, or any case where compression could cause a mistake.
 - Keep source code, configuration, repository documentation, commit messages, and pull-request content conventional and professional.
