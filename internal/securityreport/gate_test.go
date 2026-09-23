@@ -65,6 +65,17 @@ func TestEvaluateRejectsDuplicateReports(t *testing.T) {
 	}
 }
 
+func TestUnknownSeverityRequiresExplicitAcceptance(t *testing.T) {
+	policy := policyWithoutExceptions()
+	policy.BlockingSeverities = append(policy.BlockingSeverities, SeverityUnknown)
+	report := testReport("source", ScannerCompleted)
+	report.Findings = []Finding{testFinding("source", "unmapped-rule", "file", SeverityUnknown, "")}
+	decision := Evaluate(policy, []Report{report}, time.Date(2026, 9, 23, 0, 0, 0, 0, time.UTC))
+	if decision.Eligible || !reflect.DeepEqual(decision.ReasonCodes, []string{ReasonBlockingFinding}) {
+		t.Fatalf("unknown severity passed: %#v", decision)
+	}
+}
+
 func TestEvaluateClassifiesInvalidPolicy(t *testing.T) {
 	now := time.Date(2026, 7, 21, 0, 0, 0, 0, time.UTC)
 	report := testReport("source", ScannerCompleted)

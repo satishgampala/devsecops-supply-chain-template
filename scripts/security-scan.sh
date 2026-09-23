@@ -35,10 +35,11 @@ esac
 
 mkdir -p "$REPORT_DIR/raw" "$REPORT_DIR/normalized" "$REPORT_DIR/metadata" "$CACHE_DIR/trivy"
 
+rm -f -- "$REPORT_DIR/decision.json"
+
 uid=$(id -u)
 gid=$(id -g)
 image_tar="$REPORT_DIR/application-image.tar"
-normalized_reports=''
 
 cleanup() {
   if [ -f "$image_tar" ]; then
@@ -47,82 +48,29 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 
-normalize_failed() {
-  scanner=$1
-  reference=$2
-  output=$3
-  diagnostic=$4
-  go run ./cmd/sarif-normalizer \
-    -scanner "$scanner" \
-    -reference "$reference" \
-    -state failed \
-    -diagnostic "$diagnostic" \
-    -output "$output"
-}
-
-normalize_completed() {
-  scanner=$1
-  reference=$2
-  input=$3
-  output=$4
-  go run ./cmd/sarif-normalizer \
-    -scanner "$scanner" \
-    -reference "$reference" \
-    -input "$input" \
-    -output "$output"
-}
-
-finish_scan() {
-  scanner=$1
-  reference=$2
-  raw=$3
-  normalized=$4
-  status=$5
-  if [ "$status" -le 1 ] && [ -s "$raw" ] && normalize_completed "$scanner" "$reference" "$raw" "$normalized"; then
-    :
-  else
-    normalize_failed "$scanner" "$reference" "$normalized" "scanner exited with status $status or produced invalid output"
-  fi
-  normalized_reports="$normalized_reports -report $normalized"
-}
-
-run_file_scan() {
-  scanner=$1
-  reference=$2
-  raw=$3
-  normalized=$4
-  shift 4
-  set +e
-  "$@"
-  status=$?
-  set -e
-  finish_scan "$scanner" "$reference" "$raw" "$normalized" "$status"
-}
-
-run_stdout_scan() {
-  scanner=$1
-  reference=$2
-  raw=$3
-  normalized=$4
-  shift 4
-  set +e
-  "$@" >"$raw"
-  status=$?
-  set -e
-  finish_scan "$scanner" "$reference" "$raw" "$normalized" "$status"
-}
+. "$ROOT/scripts/lib/scanner-runner.sh"
 
 cd "$ROOT"
 
-run_file_scan \
-  gosec "$GOSEC_IMAGE" \
-  "$REPORT_DIR/raw/gosec.sarif" "$REPORT_DIR/normalized/gosec.json" \
+run_gosec() {
+  rm -f -- "$REPORT_DIR/raw/gosec.json"
+  gosec_status=0
   docker run --rm --user "$uid:$gid" \
     -e GOCACHE=/tmp/gocache -e GOMODCACHE=/tmp/gomodcache \
     --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" --workdir /src \
     "$GOSEC_IMAGE" \
     -track-suppressions -exclude-dir=testdata -severity medium -confidence medium \
-    -fmt sarif -out /reports/raw/gosec.sarif ./...
+    -fmt sarif -out /reports/raw/gosec.sarif -stdout -verbose json ./... >"$REPORT_DIR/raw/gosec.json" || gosec_status=$?
+  if ! validate_gosec_report "$REPORT_DIR/raw/gosec.json"; then
+    return 2
+  fi
+  return "$gosec_status"
+}
+
+run_file_scan \
+  gosec "$GOSEC_IMAGE" \
+  "$REPORT_DIR/raw/gosec.sarif" "$REPORT_DIR/normalized/gosec.json" \
+  run_gosec
 
 run_stdout_scan \
   govulncheck "$GOVULNCHECK_REFERENCE" \
@@ -136,7 +84,7 @@ run_file_scan \
     --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" \
     "$GITLEAKS_IMAGE" git /src \
     --config /src/.gitleaks.toml --redact=100 --no-banner --no-color \
-    --report-format sarif --report-path /reports/raw/gitleaks.sarif --exit-code 1
+    --report-format sarif --report-path /reports/raw/gitleaks.sarif --exit-code 10
 
 run_stdout_scan \
   zizmor "$ZIZMOR_IMAGE" \
@@ -160,7 +108,7 @@ run_file_scan \
     --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" \
     --volume "$CACHE_DIR/trivy:/cache" "$TRIVY_IMAGE" \
     --cache-dir /cache fs --scanners misconfig \
-    --severity MEDIUM,HIGH,CRITICAL --exit-code 1 \
+    --severity MEDIUM,HIGH,CRITICAL --exit-code 10 \
     --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git --skip-dirs /src/dist \
     --format sarif --output /reports/raw/trivy-config.sarif /src
 
@@ -173,7 +121,7 @@ run_file_scan \
   docker run --rm --user "$uid:$gid" \
     --volume "$REPORT_DIR:/reports" --volume "$CACHE_DIR/trivy:/cache" \
     "$TRIVY_IMAGE" --cache-dir /cache image --input /reports/application-image.tar \
-    --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+    --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 10 \
     --format sarif --output /reports/raw/trivy-image.sarif
 
 run_file_scan \
@@ -183,7 +131,7 @@ run_file_scan \
     --volume "$ROOT:/src:ro" --volume "$REPORT_DIR:/reports" \
     --volume "$CACHE_DIR/trivy:/cache" "$TRIVY_IMAGE" \
     --cache-dir /cache fs --scanners license --license-full \
-    --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --exit-code 1 \
+    --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --exit-code 10 \
     --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git --skip-dirs /src/dist \
     --format sarif --output /reports/raw/trivy-license.sarif /src
 
@@ -193,11 +141,15 @@ if [ -f "$CACHE_DIR/trivy/db/metadata.json" ]; then
   cp "$CACHE_DIR/trivy/db/metadata.json" "$REPORT_DIR/metadata/trivy-db.json"
 fi
 
-# shellcheck disable=SC2086
+set --
+for scanner in gitleaks gosec govulncheck osv-scanner trivy-config trivy-image trivy-license zizmor
+do
+  set -- "$@" -report "$REPORT_DIR/normalized/$scanner.json"
+done
 go run ./cmd/security-gate \
   -policy policy/security-policy.json \
   -evaluation-time "$EVALUATION_TIME" \
   -output "$REPORT_DIR/decision.json" \
-  $normalized_reports
+  "$@"
 
 printf 'security scan passed; reports: %s\n' "$REPORT_DIR"

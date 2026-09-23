@@ -6,6 +6,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 )
 
 const SchemaVersion = "1.0"
@@ -110,6 +111,11 @@ func (report Report) Validate() error {
 	}
 	if strings.TrimSpace(report.Scanner.Reference) == "" {
 		return fmt.Errorf("scanner reference is required")
+	}
+	if report.DatabaseUpdatedAt != "" {
+		if _, err := time.Parse(time.RFC3339, report.DatabaseUpdatedAt); err != nil {
+			return fmt.Errorf("scanner database timestamp must be RFC3339")
+		}
 	}
 	switch report.State {
 	case ScannerCompleted:

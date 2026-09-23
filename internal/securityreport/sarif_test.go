@@ -4,8 +4,53 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
+
+func TestNormalizeSARIFRejectsExecutionFailures(t *testing.T) {
+	for _, invocation := range []string{
+		`{"executionSuccessful":false}`,
+		`{}`,
+		`{"executionSuccessful":true,"toolExecutionNotifications":[{"level":"error"}]}`,
+		`{"executionSuccessful":true,"toolConfigurationNotifications":[{"level":"error"}]}`,
+	} {
+		input := `{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"test"}},"results":[],"invocations":[` + invocation + `]}]}`
+		if _, err := NormalizeSARIF(strings.NewReader(input), Scanner{Name: "gosec", Reference: "test"}); err == nil {
+			t.Fatalf("accepted failed invocation: %s", invocation)
+		}
+	}
+}
+
+func TestScannerExitContracts(t *testing.T) {
+	for _, scanner := range []string{"gosec", "osv-scanner", "gitleaks", "trivy-config", "trivy-image", "trivy-license", "govulncheck", "zizmor"} {
+		t.Run(scanner, func(t *testing.T) {
+			report := testReport(scanner, ScannerCompleted)
+			if err := ValidateScannerExit(report, 0); err != nil {
+				t.Fatal(err)
+			}
+			for _, code := range []int{1, 2, 10, 127} {
+				if err := ValidateScannerExit(report, code); err == nil {
+					t.Fatalf("empty report accepted exit %d", code)
+				}
+			}
+			report.Findings = []Finding{testFinding(scanner, "rule", "file", SeverityHigh, "")}
+			want := 10
+			switch scanner {
+			case "gosec", "osv-scanner":
+				want = 1
+			case "govulncheck", "zizmor":
+				want = 0
+			}
+			if err := ValidateScannerExit(report, want); err != nil {
+				t.Fatal(err)
+			}
+			if err := ValidateScannerExit(report, 2); err == nil {
+				t.Fatal("tool error accepted despite findings")
+			}
+		})
+	}
+}
 
 func TestNormalizeSARIFClean(t *testing.T) {
 	report := normalizeFixture(t, "clean.sarif", "source")

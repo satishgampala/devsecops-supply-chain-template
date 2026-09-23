@@ -14,8 +14,19 @@ type sarifLog struct {
 }
 
 type sarifRun struct {
-	Tool    sarifTool     `json:"tool"`
-	Results []sarifResult `json:"results"`
+	Tool        sarifTool         `json:"tool"`
+	Results     []sarifResult     `json:"results"`
+	Invocations []sarifInvocation `json:"invocations"`
+}
+
+type sarifInvocation struct {
+	ExecutionSuccessful            *bool               `json:"executionSuccessful"`
+	ToolExecutionNotifications     []sarifNotification `json:"toolExecutionNotifications"`
+	ToolConfigurationNotifications []sarifNotification `json:"toolConfigurationNotifications"`
+}
+
+type sarifNotification struct {
+	Level string `json:"level"`
 }
 
 type sarifTool struct {
@@ -99,6 +110,16 @@ func NormalizeSARIF(reader io.Reader, scanner Scanner) (Report, error) {
 		Findings:      []Finding{},
 	}
 	for runIndex, run := range log.Runs {
+		for _, invocation := range run.Invocations {
+			if invocation.ExecutionSuccessful == nil || !*invocation.ExecutionSuccessful {
+				return Report{}, fmt.Errorf("SARIF run %d did not execute successfully", runIndex)
+			}
+			for _, notification := range append(invocation.ToolExecutionNotifications, invocation.ToolConfigurationNotifications...) {
+				if notification.Level == "error" {
+					return Report{}, fmt.Errorf("SARIF run %d contains a tool error", runIndex)
+				}
+			}
+		}
 		if strings.TrimSpace(run.Tool.Driver.Name) == "" {
 			return Report{}, fmt.Errorf("SARIF run %d has no tool driver name", runIndex)
 		}

@@ -12,6 +12,7 @@
     "zizmor"
   ],
   "blockingSeverities": [
+    "unknown",
     "medium",
     "high",
     "critical"

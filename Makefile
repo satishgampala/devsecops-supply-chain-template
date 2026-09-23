@@ -113,6 +113,7 @@ container-smoke:
 
 security-test:
 	$(GO) test -count=1 ./internal/securityreport ./cmd/sarif-normalizer ./cmd/security-gate
+	./scripts/scanner-runner-fixtures.sh
 
 security-scan:
 	./scripts/security-scan.sh

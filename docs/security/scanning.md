@@ -56,6 +56,10 @@ Generated output is ignored by Git. The hosted workflow retains the same tree as
 
 Each normalized finding contains scanner, rule, artifact, location, severity, message, remediation, and license identifier when applicable. It deliberately excludes source snippets, matched secret text, environment dumps, and credentials. A scanner that crashes, omits output, or emits invalid SARIF receives state `failed`; this is distinct from a completed scanner with zero findings.
 
+The runner deletes previous output before each invocation. SARIF invocation failures and error notifications are rejected. Gosec also emits a native JSON summary from the same invocation: processing errors or zero analyzed files reject the scan because Gosec SARIF omits those errors. The runner accepts exit 1 with findings only for Gosec and OSV; Gitleaks and Trivy use explicitly configured finding exit code 10. Govulncheck and zizmor must return 0 in SARIF mode. Nonzero finding codes with empty results are failures. `make security-test` exercises these paths without Docker or network access.
+
+Unknown finding severity blocks under the repository policy. Advisory timestamps extracted from SARIF survive normalization unless an explicit valid timestamp overrides them. A recorded timestamp alone does not establish freshness or authenticity.
+
 ## Policy and exceptions
 
 [`policy/security-policy.json`](../../policy/security-policy.json) defines:
