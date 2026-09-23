@@ -114,8 +114,8 @@ Detailed views remain versioned in the [C4 system context](docs/architecture/c4-
 
 - Go 1.26.8
 - GNU Make
-- Docker with BuildKit for the container-only commands
-- Git
+- Docker with BuildKit; release-candidate checks require Docker 29.5.2 with the containerd image store
+- Git and `jq`
 - `curl` for manual endpoint checks
 - `jq`, `perl`, and `shasum` for initialization and local policy fixtures
 - Network access for current advisory databases when running live security scans

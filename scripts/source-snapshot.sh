@@ -13,7 +13,11 @@ trap 'rm -rf -- "$work"' EXIT HUP INT TERM
 # NUL-delimited names preserve spaces and newlines. Keep each operation separate
 # so a Git or tar failure cannot be hidden by the final command in a pipeline.
 git -C "$ROOT" ls-files --cached --others --exclude-standard -z >"$work/files"
-tar -C "$ROOT" --no-recursion --null -T "$work/files" -cf "$work/source.tar"
+(
+  cd "$ROOT"
+  xargs -0 sh -c 'for path do if [ -e "$path" ] || [ -L "$path" ]; then printf "%s\0" "$path"; fi; done' sh <"$work/files"
+) >"$work/existing"
+tar -C "$ROOT" --no-recursion --null -T "$work/existing" -cf "$work/source.tar"
 tar -C "$destination" -xf "$work/source.tar"
 if [ -n "$(find "$destination" -type l -print)" ]; then
   printf '%s\n' 'source snapshots do not allow symbolic links' >&2

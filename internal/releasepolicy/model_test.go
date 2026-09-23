@@ -74,6 +74,9 @@ func testPolicy() Policy {
 		CosignVersion:        "v3.1.2",
 		RequiredTests:        []string{"build", "host"},
 		RequiredScanners:     []string{"gosec", "zizmor"},
+		ScannerReferences:    map[string]string{"gosec": "gosec@test", "zizmor": "zizmor@test"},
+		MaxReportAgeHours:    24, MaxDatabaseAgeHours: 336,
+		RequiredDatabaseTimestamps: []string{},
 	}
 }
 

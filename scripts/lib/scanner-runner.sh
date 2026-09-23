@@ -18,6 +18,7 @@ normalize_failed() {
     -scanner "$scanner" \
     -reference "$reference" \
     -state failed \
+    -source-digest "${SOURCE_DIGEST:-}" -subject-digest "${SUBJECT_DIGEST:-}" -scanned-at "${SCANNED_AT:-}" \
     -diagnostic "$diagnostic" \
     -output "$output"
 }
@@ -27,12 +28,19 @@ normalize_completed() {
   reference=$2
   input=$3
   output=$4
+  scanner_exit=$5
+  set --
+  if [ "$scanner" = trivy-image ] && [ -f "${CACHE_DIR:-}/trivy/db/metadata.json" ]; then
+    database_updated=$(jq -er '.UpdatedAt' "$CACHE_DIR/trivy/db/metadata.json") || return 2
+    set -- -database-updated-at "$database_updated"
+  fi
   go run ./cmd/sarif-normalizer \
     -scanner "$scanner" \
     -reference "$reference" \
     -input "$input" \
-    -scanner-exit-code "$5" \
-    -output "$output"
+    -scanner-exit-code "$scanner_exit" \
+    -source-digest "${SOURCE_DIGEST:-}" -subject-digest "${SUBJECT_DIGEST:-}" -scanned-at "${SCANNED_AT:-}" \
+    -output "$output" "$@"
 }
 
 finish_scan() {

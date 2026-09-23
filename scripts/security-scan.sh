@@ -7,7 +7,11 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 REPORT_DIR=${REPORT_DIR:-"$ROOT/.local/security-reports/latest"}
 CACHE_DIR=${SECURITY_CACHE_DIR:-"$ROOT/.local/security-cache"}
 IMAGE=${IMAGE:-devsecops-supply-chain-template:local}
-EVALUATION_TIME=${EVALUATION_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
+EVALUATION_TIME=${EVALUATION_TIME:-}
+SCANNED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+IMAGE_ARCHIVE=${IMAGE_ARCHIVE:-}
+SOURCE_DIGEST=
+SUBJECT_DIGEST=
 
 case "$REPORT_DIR" in
   /*) ;;
@@ -18,12 +22,7 @@ case "$CACHE_DIR" in
   *) CACHE_DIR="$ROOT/$CACHE_DIR" ;;
 esac
 
-GOSEC_IMAGE='ghcr.io/securego/gosec@sha256:4342ad119a7c69f3f4e4ce78d81ba183dc774a70a7a4c6eeb15fe9e511f214f0'
-GOVULNCHECK_REFERENCE='golang.org/x/vuln/cmd/govulncheck@v1.6.0'
-GITLEAKS_IMAGE='ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f'
-ZIZMOR_IMAGE='ghcr.io/zizmorcore/zizmor@sha256:5800c8d5e83263d68a8874989b0eb3939e177540e9395de48158d24656141ee9'
-OSV_IMAGE='ghcr.io/google/osv-scanner@sha256:5116601dedc01c1c580eb92371883ec052fc4c13c3fbc109d621a63ac416d475'
-TRIVY_IMAGE='docker.io/aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f'
+. "$ROOT/scripts/lib/scanner-tools.sh"
 
 case "$REPORT_DIR" in
   "$ROOT"/*) ;;
@@ -40,18 +39,15 @@ rm -f -- "$REPORT_DIR/decision.json"
 
 uid=$(id -u)
 gid=$(id -g)
-image_tar="$REPORT_DIR/application-image.tar"
 mkdir -p "$ROOT/.local"
 # Keep bind-mounted input under the checkout; macOS VM runtimes may not share
 # the host's private temporary directory.
 source_work=$(mktemp -d "$ROOT/.local/security-source.XXXXXX")
 SOURCE_DIR="$source_work/source"
+image_tar="$source_work/candidate.tar"
 
 cleanup() {
   rm -rf -- "$source_work"
-  if [ -f "$image_tar" ]; then
-    rm -f -- "$image_tar"
-  fi
 }
 trap cleanup EXIT HUP INT TERM
 
@@ -61,6 +57,20 @@ trap cleanup EXIT HUP INT TERM
 . "$ROOT/scripts/lib/scanner-runner.sh"
 
 cd "$ROOT"
+if [ -n "$IMAGE_ARCHIVE" ]; then
+  [ -z "$(git status --porcelain --untracked-files=all)" ] || {
+    printf '%s\n' 'candidate scans require a clean working tree' >&2; exit 2;
+  }
+  SOURCE_DIGEST=$(git rev-parse HEAD)
+  cp -- "$IMAGE_ARCHIVE" "$source_work/release.oci.tar"
+  SUBJECT_DIGEST=$(go run ./cmd/supply-chain subject -artifact "$source_work/release.oci.tar")
+  docker load --input "$source_work/release.oci.tar"
+  docker save --output "$image_tar" "$SUBJECT_DIGEST"
+  exported_subject=$(go run ./cmd/supply-chain subject -artifact "$image_tar")
+  [ "$exported_subject" = "$SUBJECT_DIGEST" ] || {
+    printf '%s\n' 'scanner export changed the candidate OCI manifest' >&2; exit 2;
+  }
+fi
 
 run_gosec() {
   rm -f -- "$REPORT_DIR/raw/gosec.json"
@@ -122,15 +132,18 @@ run_file_scan \
     --skip-dirs /src/testdata/security --skip-dirs /src/.local --skip-dirs /src/.git --skip-dirs /src/dist \
     --format sarif --output /reports/raw/trivy-config.sarif /src
 
-docker build --tag "$IMAGE" "$SOURCE_DIR"
-docker save --output "$image_tar" "$IMAGE"
+if [ -z "$IMAGE_ARCHIVE" ]; then
+  docker build --tag "$IMAGE" "$SOURCE_DIR"
+  docker save --output "$image_tar" "$IMAGE"
+fi
 
 run_file_scan \
   trivy-image "$TRIVY_IMAGE" \
   "$REPORT_DIR/raw/trivy-image.sarif" "$REPORT_DIR/normalized/trivy-image.json" \
   docker run --rm --user "$uid:$gid" \
     --volume "$REPORT_DIR:/reports" --volume "$CACHE_DIR/trivy:/cache" \
-    "$TRIVY_IMAGE" --cache-dir /cache image --input /reports/application-image.tar \
+    --volume "$image_tar:/candidate.tar:ro" \
+    "$TRIVY_IMAGE" --cache-dir /cache image --input /candidate.tar \
     --scanners vuln --severity HIGH,CRITICAL --exit-code 10 \
     --format sarif --output /reports/raw/trivy-image.sarif
 
@@ -151,6 +164,10 @@ if [ -f "$CACHE_DIR/trivy/db/metadata.json" ]; then
   cp "$CACHE_DIR/trivy/db/metadata.json" "$REPORT_DIR/metadata/trivy-db.json"
 fi
 
+if [ -n "$IMAGE_ARCHIVE" ]; then
+  cmp -- "$IMAGE_ARCHIVE" "$source_work/release.oci.tar" || { printf '%s\n' 'candidate archive changed during scanning' >&2; exit 2; }
+fi
+EVALUATION_TIME=${EVALUATION_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
 set --
 for scanner in gitleaks gosec govulncheck osv-scanner trivy-config trivy-image trivy-license zizmor
 do

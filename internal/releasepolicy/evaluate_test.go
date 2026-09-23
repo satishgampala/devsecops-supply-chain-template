@@ -92,6 +92,10 @@ func TestEvaluateRejectsReleaseFailures(t *testing.T) {
 			value.tests.Tests[0].State = "failed"
 			value.manifest.Tests = value.writeJSON("tests.json", value.tests)
 		}},
+		{name: "tests from another image", reason: ReasonRequiredTestFailed, mutate: func(value *evaluationFixture) {
+			value.tests.SubjectDigest = "sha256:" + strings.Repeat("0", 64)
+			value.manifest.Tests = value.writeJSON("tests.json", value.tests)
+		}},
 		{name: "missing SBOM", reason: ReasonSBOMMissing, mutate: func(value *evaluationFixture) {
 			value.manifest.Integrity.SBOM.Path = "missing.spdx.json"
 		}},
@@ -154,6 +158,49 @@ func TestEvaluateRejectsReleaseFailures(t *testing.T) {
 				t.Fatalf("reason codes = %v, want %s", decision.ReasonCodes, test.reason)
 			}
 		})
+	}
+}
+
+func TestEvaluateRejectsUnboundOrStaleScannerEvidence(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*securityreport.Report)
+	}{
+		{"wrong tool", func(r *securityreport.Report) { r.Scanner.Reference = "different@version" }},
+		{"wrong source", func(r *securityreport.Report) { r.SourceDigest = strings.Repeat("b", 40) }},
+		{"wrong image", func(r *securityreport.Report) { r.SubjectDigest = "sha256:" + strings.Repeat("b", 64) }},
+		{"missing scan time", func(r *securityreport.Report) { r.ScannedAt = "" }},
+		{"stale report", func(r *securityreport.Report) { r.ScannedAt = "2026-07-20T11:59:59Z" }},
+		{"future report", func(r *securityreport.Report) { r.ScannedAt = "2026-07-21T12:05:01Z" }},
+		{"missing database time", func(r *securityreport.Report) { r.DatabaseUpdatedAt = "" }},
+		{"stale database", func(r *securityreport.Report) { r.DatabaseUpdatedAt = "2026-07-07T11:59:59Z" }},
+		{"future database", func(r *securityreport.Report) { r.DatabaseUpdatedAt = "2026-07-21T12:05:01Z" }},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := newEvaluationFixture(t)
+			fixture.policy.RequiredDatabaseTimestamps = []string{"gosec"}
+			fixture.securityReports[0].DatabaseUpdatedAt = fixture.expectedTime
+			test.mutate(&fixture.securityReports[0])
+			fixture.refreshSecurity()
+			fixture.refreshValidation()
+			decision := fixture.evaluate(&fakeSignatureVerifier{version: fixture.policy.CosignVersion})
+			if decision.Eligible || !hasReason(decision, ReasonScannerFailed) {
+				t.Fatalf("invalid scanner context accepted: %v", decision.ReasonCodes)
+			}
+		})
+	}
+}
+
+func TestEvaluateAcceptsExactFreshnessBoundaries(t *testing.T) {
+	fixture := newEvaluationFixture(t)
+	fixture.policy.RequiredDatabaseTimestamps = []string{"gosec"}
+	fixture.securityReports[0].ScannedAt = "2026-07-20T12:00:00Z"
+	fixture.securityReports[0].DatabaseUpdatedAt = "2026-07-07T12:00:00Z"
+	fixture.refreshSecurity()
+	fixture.refreshValidation()
+	if decision := fixture.evaluate(&fakeSignatureVerifier{version: fixture.policy.CosignVersion}); !decision.Eligible {
+		t.Fatalf("exact freshness boundaries rejected: %v", decision.ReasonCodes)
 	}
 }
 
@@ -269,6 +316,7 @@ func newEvaluationFixture(t *testing.T) *evaluationFixture {
 	fixture.tests = TestSummary{
 		SchemaVersion: SchemaVersion,
 		SourceDigest:  sourceDigest,
+		SubjectDigest: archiveInfo.ManifestDigest,
 		Tests: []TestResult{
 			{ID: "build", State: "passed", Ref: "make build"},
 			{ID: "host", State: "passed", Ref: "make verify"},
@@ -291,6 +339,11 @@ func newEvaluationFixture(t *testing.T) *evaluationFixture {
 	reports := []securityreport.Report{
 		cleanReport("gosec", "gosec@test"),
 		cleanReport("zizmor", "zizmor@test"),
+	}
+	for index := range reports {
+		reports[index].SourceDigest = sourceDigest
+		reports[index].SubjectDigest = archiveInfo.ManifestDigest
+		reports[index].ScannedAt = evaluationTime
 	}
 	fixture.securityReports = reports
 	reportRefs := make([]ScannerRef, 0, len(reports))
@@ -373,6 +426,9 @@ func newEvaluationFixture(t *testing.T) *evaluationFixture {
 		CosignVersion:        "v3.1.2",
 		RequiredTests:        []string{"build", "host"},
 		RequiredScanners:     []string{"gosec", "zizmor"},
+		ScannerReferences:    map[string]string{"gosec": "gosec@test", "zizmor": "zizmor@test"},
+		MaxReportAgeHours:    24, MaxDatabaseAgeHours: 336,
+		RequiredDatabaseTimestamps: []string{},
 	}
 	fixture.policy.Normalize()
 	fixture.manifest = Manifest{

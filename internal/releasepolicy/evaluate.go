@@ -100,7 +100,7 @@ func (evaluation *evaluator) verifyTests() {
 		evaluation.add(ReasonRequiredTestFailed)
 		return
 	}
-	if summary.SchemaVersion != SchemaVersion || summary.SourceDigest != evaluation.manifest.Artifact.SourceDigest {
+	if summary.SchemaVersion != SchemaVersion || summary.SourceDigest != evaluation.manifest.Artifact.SourceDigest || summary.SubjectDigest != evaluation.manifest.Artifact.ManifestDigest {
 		evaluation.invalidate("tests", ReasonRequiredTestFailed)
 		return
 	}
@@ -150,7 +150,7 @@ func (evaluation *evaluator) verifySecurity() {
 			continue
 		}
 		report.Normalize()
-		if err := report.Validate(); err != nil || report.Scanner.Name != reportRef.ID {
+		if err := report.Validate(); err != nil || report.Scanner.Name != reportRef.ID || !evaluation.validScanContext(report) {
 			evaluation.invalidate(id, ReasonScannerFailed)
 			continue
 		}
@@ -192,6 +192,30 @@ func (evaluation *evaluator) verifySecurity() {
 			evaluation.add(ReasonScannerFailed)
 		}
 	}
+}
+
+func (evaluation *evaluator) validScanContext(report securityreport.Report) bool {
+	if report.Scanner.Reference != evaluation.policy.ScannerReferences[report.Scanner.Name] ||
+		report.SourceDigest != evaluation.manifest.Artifact.SourceDigest || report.SubjectDigest != evaluation.manifest.Artifact.ManifestDigest {
+		return false
+	}
+	now, err := time.Parse(time.RFC3339, evaluation.manifest.EvaluationTime)
+	if err != nil {
+		return false
+	}
+	fresh := func(value string, hours int) bool {
+		observed, err := time.Parse(time.RFC3339, value)
+		age := now.Sub(observed)
+		return err == nil && age >= -5*time.Minute && age <= time.Duration(hours)*time.Hour
+	}
+	if !fresh(report.ScannedAt, evaluation.policy.MaxReportAgeHours) {
+		return false
+	}
+	required := false
+	for _, scanner := range evaluation.policy.RequiredDatabaseTimestamps {
+		required = required || scanner == report.Scanner.Name
+	}
+	return (!required && report.DatabaseUpdatedAt == "") || fresh(report.DatabaseUpdatedAt, evaluation.policy.MaxDatabaseAgeHours)
 }
 
 func (evaluation *evaluator) verifyIntegrity() {

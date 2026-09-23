@@ -1,6 +1,7 @@
 package securityreport
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -51,6 +52,9 @@ type Report struct {
 	Scanner           Scanner      `json:"scanner"`
 	State             ScannerState `json:"state"`
 	DatabaseUpdatedAt string       `json:"databaseUpdatedAt,omitempty"`
+	SourceDigest      string       `json:"sourceDigest,omitempty"`
+	SubjectDigest     string       `json:"subjectDigest,omitempty"`
+	ScannedAt         string       `json:"scannedAt,omitempty"`
 	Findings          []Finding    `json:"findings"`
 	Diagnostic        string       `json:"diagnostic,omitempty"`
 }
@@ -112,6 +116,17 @@ func (report Report) Validate() error {
 	if strings.TrimSpace(report.Scanner.Reference) == "" {
 		return fmt.Errorf("scanner reference is required")
 	}
+	if report.SourceDigest != "" && !validSHA(report.SourceDigest, 40) {
+		return fmt.Errorf("source digest must be a full lowercase Git SHA")
+	}
+	if report.SubjectDigest != "" && (!strings.HasPrefix(report.SubjectDigest, "sha256:") || !validSHA(strings.TrimPrefix(report.SubjectDigest, "sha256:"), 64)) {
+		return fmt.Errorf("subject digest must be a full lowercase SHA-256 digest")
+	}
+	if report.ScannedAt != "" {
+		if _, err := time.Parse(time.RFC3339, report.ScannedAt); err != nil {
+			return fmt.Errorf("scan time must be RFC3339")
+		}
+	}
 	if report.DatabaseUpdatedAt != "" {
 		if _, err := time.Parse(time.RFC3339, report.DatabaseUpdatedAt); err != nil {
 			return fmt.Errorf("scanner database timestamp must be RFC3339")
@@ -144,6 +159,14 @@ func (report Report) Validate() error {
 		}
 	}
 	return nil
+}
+
+func validSHA(value string, length int) bool {
+	if len(value) != length || value != strings.ToLower(value) {
+		return false
+	}
+	_, err := hex.DecodeString(value)
+	return err == nil
 }
 
 func (severity Severity) Valid() bool {

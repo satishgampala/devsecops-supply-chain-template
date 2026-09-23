@@ -33,7 +33,9 @@ cp "$ROOT/.github/workflows/ci.yml" "$fixture/.github/workflows/ci.yml"
 
 git -C "$fixture" init --quiet
 printf 'package fixture\n' >"$fixture/tracked.go"
-git -C "$fixture" add go.mod Dockerfile scripts policy .github tracked.go
+printf 'package fixture\n' >"$fixture/deleted.go"
+git -C "$fixture" add go.mod Dockerfile scripts policy .github tracked.go deleted.go
+rm -- "$fixture/deleted.go"
 printf 'package changed\n' >"$fixture/tracked.go"
 printf 'package fixture\n' >"$fixture/new file.go"
 printf '/ignored/\n' >"$fixture/.gitignore"
@@ -45,6 +47,7 @@ printf 'this is not Go\n' >"$fixture/nested-worktree/broken.go"
 cmp "$fixture/tracked.go" "$work/snapshot/tracked.go"
 cmp "$fixture/new file.go" "$work/snapshot/new file.go"
 [ ! -e "$work/snapshot/.git" ]
+[ ! -e "$work/snapshot/deleted.go" ]
 [ ! -e "$work/snapshot/ignored" ]
 [ ! -e "$work/snapshot/nested-worktree" ]
 expect_failure "$fixture/scripts/source-snapshot.sh" "$work/snapshot"
@@ -55,4 +58,6 @@ expect_failure "$fixture/scripts/format-go.sh" check
 "$fixture/scripts/format-go.sh" check
 ln -s "$work" "$fixture/external-link"
 expect_failure "$fixture/scripts/source-snapshot.sh" "$work/linked-snapshot"
+ln -s "$fixture/tracked.go" "$fixture/linked.go"
+expect_failure "$fixture/scripts/format-go.sh" write
 printf '%s\n' 'maintenance fixtures passed: version drift, source isolation, formatting scope, and symlink rejection'

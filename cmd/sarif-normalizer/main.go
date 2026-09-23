@@ -28,6 +28,9 @@ func run(arguments []string) error {
 	stateText := flags.String("state", string(securityreport.ScannerCompleted), "completed, failed, or not_run")
 	diagnostic := flags.String("diagnostic", "", "sanitized failure diagnostic")
 	databaseUpdatedAt := flags.String("database-updated-at", "", "scanner database timestamp")
+	sourceDigest := flags.String("source-digest", "", "source commit scanned for the candidate")
+	subjectDigest := flags.String("subject-digest", "", "candidate OCI manifest digest")
+	scannedAt := flags.String("scanned-at", "", "scan start time in RFC3339")
 	exitCode := flags.Int("scanner-exit-code", -1, "observed scanner process exit code")
 	if err := flags.Parse(arguments); err != nil {
 		return err
@@ -75,6 +78,9 @@ func run(arguments []string) error {
 	if strings.TrimSpace(*databaseUpdatedAt) != "" {
 		report.DatabaseUpdatedAt = strings.TrimSpace(*databaseUpdatedAt)
 	}
+	report.SourceDigest = *sourceDigest
+	report.SubjectDigest = *subjectDigest
+	report.ScannedAt = *scannedAt
 	report.Normalize()
 	if err := report.Validate(); err != nil {
 		return fmt.Errorf("validate normalized report: %w", err)

@@ -15,7 +15,7 @@ M02 adds independent source, dependency, secret, workflow, infrastructure, image
 | Trivy 0.72.0 | Dockerfile and infrastructure configuration | Digest-pinned container | Medium, high, and critical findings block. |
 | Trivy 0.72.0 | Final image vulnerabilities and source licenses | Digest-pinned container | High or critical image findings and unapproved licenses block. |
 
-The exact container digests and module versions are stored in `scripts/security-scan.sh`. GitHub Actions and scanner containers are never referenced by mutable tags.
+The exact container digests and module versions are stored in `policy/release-v1.json` and consumed by `scripts/lib/scanner-tools.sh`. GitHub Actions and scanner containers are never referenced by mutable tags.
 
 ## Run the controls
 
@@ -31,9 +31,9 @@ Run the live clean-state gate:
 make security-scan
 ```
 
-This command requires Docker and network access to current advisory databases. It builds the application image, exports it as an archive, and scans the archive without mounting the Docker socket into a scanner container.
+This command requires Docker and network access to current advisory databases. Without `IMAGE_ARCHIVE`, it builds a development image and scans its Docker archive. For a release, use `make candidate`: it supplies the verified OCI archive, loads that archive by digest, and exports the same manifest for Trivy. The exporter must preserve the independently verified OCI manifest digest. Scanner containers never receive the Docker socket; the image input is mounted read-only.
 
-Source scanners and the image build use a fresh snapshot of tracked files plus non-ignored new files. Ignored build output, local caches, and nested worktrees cannot contribute scanner findings or build inputs. Snapshot creation rejects symbolic links and stale output directories. Gitleaks separately scans the actual repository history. Seeded scanner fixtures remain excluded by their explicit paths.
+Development source scanners and image builds use a fresh snapshot of tracked files plus non-ignored new files. Ignored build output, local caches, and nested worktrees cannot contribute scanner findings or build inputs. Snapshot creation rejects symbolic links and stale output directories. Gitleaks separately scans the actual repository history. Seeded scanner fixtures remain excluded by their explicit paths.
 
 Run the isolated expected-failure suite:
 
@@ -60,7 +60,7 @@ Each normalized finding contains scanner, rule, artifact, location, severity, me
 
 The runner deletes previous output before each invocation. SARIF invocation failures and error notifications are rejected. Gosec also emits a native JSON summary from the same invocation: processing errors or zero analyzed files reject the scan because Gosec SARIF omits those errors. The runner accepts exit 1 with findings only for Gosec and OSV; Gitleaks and Trivy use explicitly configured finding exit code 10. Govulncheck and zizmor must return 0 in SARIF mode. Nonzero finding codes with empty results are failures. `make security-test` exercises these paths without Docker or network access.
 
-Unknown finding severity blocks under the repository policy. Advisory timestamps extracted from SARIF survive normalization unless an explicit valid timestamp overrides them. A recorded timestamp alone does not establish freshness or authenticity.
+Unknown finding severity blocks under the repository policy. Advisory timestamps extracted from SARIF survive normalization unless an explicit valid timestamp overrides them. A recorded timestamp alone does not establish freshness or authenticity. The release verifier separately requires the exact configured scanner reference, source commit, candidate manifest digest, and scan start time. Reports must be at most 24 hours old, with at most five minutes of future clock skew. Govulncheck and Trivy image reports must also carry database timestamps no more than 336 hours old; any supplied database timestamp is checked against that limit. The complete report hashes are covered by the signed validation statement.
 
 ## Policy and exceptions
 
@@ -94,3 +94,5 @@ Stable M02 reason codes are `required_scanner_missing`, `scanner_failed`, `block
 Live vulnerability results change as advisory databases are updated. The scan records available database timestamps, while deterministic fixtures test policy behavior without a live database. Review scanner references, policy, and exceptions with every update proposal and at least monthly. Never disable TLS verification, module authenticity, transparency checks, or scanner failure handling to make a gate pass.
 
 The `go.mod` toolchain directive selects the Go version for host checks, scanners, and Actions setup. A Go update must also update the digest-pinned Docker builder and `policy/release-v1.json` together. `make toolchain-check` rejects drift, including a Docker-only Dependabot update. Verify the image tag and digest against the upstream registry, run `make verify`, container smoke tests, and live scans, then regenerate integrity evidence. Historical milestone evidence and fixed synthetic unit-test versions describe their original inputs and are not maintenance pins.
+
+`make candidate` requires a clean checkout, runs host and scanner-fixture gates, builds one `linux/amd64` OCI candidate, smoke-tests that candidate by its manifest digest, and scans an export of that same digest. Its test summary records the running container’s observed image identity. It rejects source or archive changes during validation. A development scan with no candidate binding is useful feedback but cannot satisfy the release verifier.

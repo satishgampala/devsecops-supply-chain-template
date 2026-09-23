@@ -20,7 +20,7 @@ The command refuses a dirty working tree and any `SOURCE_DIGEST` override that d
 
 ## OCI subject contract
 
-The verifier reads the tar stream without extracting paths. It requires exactly one `linux/amd64` manifest, validates index and manifest media types, and recomputes the SHA-256 and size for the manifest, config, and every layer. Archive size is limited to 2 GiB and each layer to 1 GiB. The release subject is the image-manifest digest; the archive checksum is recorded separately because tar-container bytes are not the OCI image identity.
+The verifier reads the tar stream without extracting paths. It requires exactly one `linux/amd64` manifest, derives the platform from the config and checks any index platform declaration, validates index and manifest media types, and recomputes the SHA-256 and size for the manifest, config, and every layer. Archive size is limited to 2 GiB and each layer to 1 GiB. The release subject is the image-manifest digest; the archive checksum is recorded separately because tar-container bytes are not the OCI image identity.
 
 ## SPDX contract
 
@@ -33,6 +33,12 @@ Syft intentionally emits a fresh `documentNamespace` and `creationInfo.created`.
 The local statement records explicit source URI and commit, build type, `linux/amd64` platform, fixed source epoch, repository-owned local builder ID, invocation ID, and OCI subject. Strict decoding rejects unknown fields and trailing content. Verification requires exact equality for every identity and digest field.
 
 Local provenance does not claim a GitHub identity. `.github/workflows/provenance.yml` separately runs on default-branch pushes and manual dispatch, obtains OIDC only in the attestation job, and asks GitHub to create provenance and SPDX artifact-attestation bundles for the same manifest digest. Pull requests cannot invoke that privileged job. Hosted execution remains unverified until an authorized push produces inspectable bundles.
+
+## Candidate validation
+
+`make candidate` builds the release archive once after host and scanner-fixture checks. It imports the archive into Docker’s containerd image store, runs the restricted smoke test by the immutable manifest digest, and exports that digest for Trivy. Docker export omits the optional index platform field; the verifier derives it from the hashed image config and requires the exported manifest digest to match the original. Neither the smoke stage nor the release scan rebuilds the service.
+
+Docker 29.5.2 with the containerd image store is the verified runtime. The signing workflow configures that version on an ephemeral runner. An unsupported runtime fails rather than falling back to an independently rebuilt image.
 
 ## Reproducibility and failure behavior
 

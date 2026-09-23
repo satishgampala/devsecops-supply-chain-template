@@ -34,22 +34,26 @@ const (
 )
 
 type Policy struct {
-	SchemaVersion         string   `json:"schemaVersion"`
-	Version               string   `json:"version"`
-	ArtifactName          string   `json:"artifactName"`
-	SourceURI             string   `json:"sourceURI"`
-	Platform              string   `json:"platform"`
-	Module                string   `json:"module"`
-	GoVersion             string   `json:"goVersion"`
-	ProvenanceBuildType   string   `json:"provenanceBuildType"`
-	ProvenanceBuilderID   string   `json:"provenanceBuilderID"`
-	SourceDateEpoch       int64    `json:"sourceDateEpoch"`
-	SecurityPolicySHA256  string   `json:"securityPolicySHA256"`
-	SigningPolicySHA256   string   `json:"signingPolicySHA256"`
-	CosignVersion         string   `json:"cosignVersion"`
-	MaxAcceptedExceptions int      `json:"maxAcceptedExceptions"`
-	RequiredTests         []string `json:"requiredTests"`
-	RequiredScanners      []string `json:"requiredScanners"`
+	SchemaVersion              string            `json:"schemaVersion"`
+	Version                    string            `json:"version"`
+	ArtifactName               string            `json:"artifactName"`
+	SourceURI                  string            `json:"sourceURI"`
+	Platform                   string            `json:"platform"`
+	Module                     string            `json:"module"`
+	GoVersion                  string            `json:"goVersion"`
+	ProvenanceBuildType        string            `json:"provenanceBuildType"`
+	ProvenanceBuilderID        string            `json:"provenanceBuilderID"`
+	SourceDateEpoch            int64             `json:"sourceDateEpoch"`
+	SecurityPolicySHA256       string            `json:"securityPolicySHA256"`
+	SigningPolicySHA256        string            `json:"signingPolicySHA256"`
+	CosignVersion              string            `json:"cosignVersion"`
+	MaxAcceptedExceptions      int               `json:"maxAcceptedExceptions"`
+	RequiredTests              []string          `json:"requiredTests"`
+	RequiredScanners           []string          `json:"requiredScanners"`
+	ScannerReferences          map[string]string `json:"scannerReferences"`
+	MaxReportAgeHours          int               `json:"maxReportAgeHours"`
+	MaxDatabaseAgeHours        int               `json:"maxDatabaseAgeHours"`
+	RequiredDatabaseTimestamps []string          `json:"requiredDatabaseTimestamps"`
 }
 
 type Manifest struct {
@@ -126,6 +130,7 @@ type SigningEvidence struct {
 type TestSummary struct {
 	SchemaVersion string       `json:"schemaVersion"`
 	SourceDigest  string       `json:"sourceDigest"`
+	SubjectDigest string       `json:"subjectDigest"`
 	Tests         []TestResult `json:"tests"`
 }
 
@@ -165,6 +170,7 @@ type EvidenceSummary struct {
 func (policy *Policy) Normalize() {
 	sort.Strings(policy.RequiredTests)
 	sort.Strings(policy.RequiredScanners)
+	sort.Strings(policy.RequiredDatabaseTimestamps)
 }
 
 func (policy Policy) Validate() error {
@@ -200,6 +206,24 @@ func (policy Policy) Validate() error {
 	}
 	if err := validateUniqueIDs("required scanner", policy.RequiredScanners); err != nil {
 		return err
+	}
+	if policy.MaxReportAgeHours <= 0 || policy.MaxReportAgeHours > 8760 || policy.MaxDatabaseAgeHours <= 0 || policy.MaxDatabaseAgeHours > 8760 {
+		return fmt.Errorf("evidence freshness limits must be between 1 and 8760 hours")
+	}
+	if len(policy.ScannerReferences) != len(policy.RequiredScanners) {
+		return fmt.Errorf("every required scanner must have one exact reference")
+	}
+	for _, scanner := range policy.RequiredScanners {
+		if strings.TrimSpace(policy.ScannerReferences[scanner]) == "" {
+			return fmt.Errorf("missing reference for scanner %q", scanner)
+		}
+	}
+	seenDatabases := make(map[string]bool)
+	for _, scanner := range policy.RequiredDatabaseTimestamps {
+		if policy.ScannerReferences[scanner] == "" || seenDatabases[scanner] {
+			return fmt.Errorf("invalid or duplicate database timestamp requirement")
+		}
+		seenDatabases[scanner] = true
 	}
 	return nil
 }

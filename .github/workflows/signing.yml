@@ -35,44 +35,26 @@ jobs:
           check-latest: false
           cache: false
 
-      - name: Fix release evaluation time
+      - name: Set up Docker with the containerd image store
+        uses: docker/setup-docker-action@2bf61fb9464cc67f0cbdeabed6aa0380accd1c70 # v5.5.0
+        with:
+          version: v29.5.2
+          daemon-config: |
+            {"features":{"containerd-snapshotter":true}}
+
+      - name: Validate one release candidate
         id: clock
-        run: printf 'evaluation_time=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"$GITHUB_OUTPUT"
-
-      - name: Verify host and container behavior
         run: |
-          make verify
-          make container-build
-          make container-smoke
+          make candidate
+          evaluation_time="$(jq -er '.evaluatedAt' dist/security/decision.json)"
+          printf 'evaluation_time=%s\n' "$evaluation_time" >>"$GITHUB_OUTPUT"
 
-      - name: Verify scanner failure fixtures
-        run: make security-fixtures
-
-      - name: Run layered scanner gate
-        env:
-          EVALUATION_TIME: ${{ steps.clock.outputs.evaluation_time }}
-          REPORT_DIR: .local/security-reports/release
-        run: make security-scan
-
-      - name: Generate verified integrity evidence
-        run: make integrity
-
-      - name: Stage release inputs
-        env:
-          SOURCE_DIGEST: ${{ github.sha }}
+      - name: Stage verified release inputs
         run: |
           mkdir -p release-build/security/normalized
-          cp -- .local/security-reports/release/decision.json release-build/security/decision.json
-          cp -- .local/security-reports/release/normalized/*.json release-build/security/normalized/
-          jq --null-input --arg source "$SOURCE_DIGEST" \
-            '{schemaVersion:"1.0",sourceDigest:$source,tests:[
-              {id:"build",state:"passed",ref:"make build"},
-              {id:"container-smoke",state:"passed",ref:"make container-smoke"},
-              {id:"host",state:"passed",ref:"make verify"},
-              {id:"integrity",state:"passed",ref:"make integrity"},
-              {id:"race",state:"passed",ref:"make test-race"},
-              {id:"security-fixtures",state:"passed",ref:"make security-fixtures"}
-            ]}' >release-build/tests.json
+          cp -- dist/tests.json release-build/tests.json
+          cp -- dist/security/decision.json release-build/security/decision.json
+          cp -- dist/security/normalized/*.json release-build/security/normalized/
 
       - name: Bind validation evidence before signing
         env:
@@ -99,6 +81,7 @@ jobs:
             dist/provenance.local.json
             dist/verification.json
             dist/validation-evidence.json
+            dist/container-smoke.json
             dist/tooling.json
             dist/checksums.sha256
             release-build/tests.json
@@ -235,6 +218,7 @@ jobs:
             staging/dist/provenance.local.json
             staging/dist/verification.json
             staging/dist/validation-evidence.json
+            staging/dist/container-smoke.json
             staging/dist/validation-evidence.sigstore.json
             staging/dist/tooling.json
             staging/dist/checksums.sha256

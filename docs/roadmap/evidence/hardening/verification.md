@@ -39,8 +39,20 @@ Scope: corrective working tree following `317fba9`.
 
 Real hosted signatures remain unverified. Exact candidate test/scan binding and scanner identity/freshness validation remain the next controls.
 
+## Candidate identity and scanner freshness — 2026-09-23
+
+Scope: corrective working tree following `131b389`.
+
+- A clean temporary Git repository passed `make candidate`: host/race/build checks, all eight seeded scanner controls, one release OCI build, restricted runtime smoke tests by manifest digest, and all eight live scanners. The image digest observed by the container matched the archive and every report: `sha256:a1f15e9a8fb114258059b80b8d6b8171b90127777be50c6ad913e33149f6c520`. The live gate recorded eight completed scanners, two findings, zero blocking findings, and one pre-existing exception.
+- Trivy 0.72.0 does not accept an OCI tar directly. The runner imports the verified archive, exports its immutable digest through Docker, independently verifies that the export retains the original OCI manifest, and mounts that export read-only for scanning. No release scan or smoke stage rebuilds the image. Docker 29.5.2 with the containerd image store was used locally and is explicitly configured in the signing workflow.
+- The OCI verifier now derives architecture and OS from the hashed config, rejects a conflicting config, and accepts an omitted optional index platform field as emitted by Docker export.
+- Scanner references have one source in `policy/release-v1.json`. Normalized reports retain source commit, candidate digest, scan time, and database time. Release policy rejects mismatched references, sources, and subjects; missing/stale/future scan and required database timestamps; and test summaries from another image. Tests cover the exact 24-hour report and 336-hour database boundaries, with five-minute clock-skew tolerance.
+- The live govulncheck database timestamp was `2026-09-16T18:00:43Z`; Trivy recorded `2026-09-23T01:09:35.013781075Z`. Both survived normalization. A clean CLI release-policy fixture passed with the new bindings and retained tamper rejection. Its signature boundary remains a test double.
+- Final `make verify security-test`, Actionlint 1.7.7 on `ci.yml` and 1.7.12 on all workflows, development container build/smoke, shell syntax, local Markdown links, and high-confidence secret checks passed. Existing Mermaid diagrams were unchanged.
+- Source-selection fixtures additionally cover unstaged tracked-file deletions and reject formatting through symlinks. Seeded scanner runs clear previous SARIF output before invocation.
+
 ## Remaining work
 
-Artifact/test/scan binding, scanner identity/freshness enforcement, initializer case handling, CI consolidation, consumer CI, portfolio documentation, and final integrated validation remain pending under the [implementation plan](../../implementation-plans/2026-09-23-portfolio-hardening.md).
+Initializer case handling, CI consolidation, consumer CI, portfolio documentation, and final integrated validation remain pending under the [implementation plan](../../implementation-plans/2026-09-23-portfolio-hardening.md).
 
 Hosted execution remains blocked by the observed GitHub account billing lock. Repository protections and publication remain separate, unverified remote gates.

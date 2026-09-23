@@ -7,12 +7,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 REPORT_DIR=${FIXTURE_REPORT_DIR:-"$ROOT/.local/security-fixtures/latest"}
 CACHE_DIR=${SECURITY_CACHE_DIR:-"$ROOT/.local/security-cache"}
 
-GOSEC_IMAGE='ghcr.io/securego/gosec@sha256:4342ad119a7c69f3f4e4ce78d81ba183dc774a70a7a4c6eeb15fe9e511f214f0'
-GOVULNCHECK_REFERENCE='golang.org/x/vuln/cmd/govulncheck@v1.6.0'
-GITLEAKS_IMAGE='ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f'
-ZIZMOR_IMAGE='ghcr.io/zizmorcore/zizmor@sha256:5800c8d5e83263d68a8874989b0eb3939e177540e9395de48158d24656141ee9'
-OSV_IMAGE='ghcr.io/google/osv-scanner@sha256:5116601dedc01c1c580eb92371883ec052fc4c13c3fbc109d621a63ac416d475'
-TRIVY_IMAGE='docker.io/aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f'
+. "$ROOT/scripts/lib/scanner-tools.sh"
 VULNERABLE_IMAGE='devsecops-supply-chain-template:vulnerable-fixture'
 
 case "$REPORT_DIR" in
@@ -20,6 +15,10 @@ case "$REPORT_DIR" in
 esac
 
 mkdir -p "$REPORT_DIR" "$CACHE_DIR/trivy"
+for scanner in gosec govulncheck gitleaks zizmor osv-scanner trivy-config trivy-license trivy-image
+do
+  rm -f -- "$REPORT_DIR/$scanner.sarif"
+done
 uid=$(id -u)
 gid=$(id -g)
 image_tar="$REPORT_DIR/vulnerable-image.tar"

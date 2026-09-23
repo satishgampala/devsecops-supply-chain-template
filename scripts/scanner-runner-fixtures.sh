@@ -46,4 +46,16 @@ do
     exit 1
   fi
 done
+SOURCE_DIGEST=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+SUBJECT_DIGEST=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+SCANNED_AT=2026-09-23T00:00:00Z
+CACHE_DIR="$WORK/cache"
+mkdir -p "$CACHE_DIR/trivy/db"
+printf '%s\n' '{"UpdatedAt":"2026-09-22T00:00:00Z"}' >"$CACHE_DIR/trivy/db/metadata.json"
+run_file_scan trivy-image fixture "$raw" "$normalized" cp testdata/security/sarif/clean.sarif "$raw"
+jq -e --arg source "$SOURCE_DIGEST" --arg subject "$SUBJECT_DIGEST" \
+  '.state == "completed" and .sourceDigest == $source and .subjectDigest == $subject and .scannedAt == "2026-09-23T00:00:00Z" and .databaseUpdatedAt == "2026-09-22T00:00:00Z"' "$normalized" >/dev/null
+printf '%s\n' '{}' >"$CACHE_DIR/trivy/db/metadata.json"
+run_file_scan trivy-image fixture "$raw" "$normalized" cp testdata/security/sarif/clean.sarif "$raw"
+jq -e '.state == "failed"' "$normalized" >/dev/null
 printf '%s\n' 'scanner execution fixtures passed'

@@ -36,13 +36,17 @@ done
 
 cd "$ROOT"
 make integrity
+subject=$(go run ./cmd/supply-chain subject -artifact dist/image.oci.tar)
 
 scanners='gitleaks gosec govulncheck osv-scanner trivy-config trivy-image trivy-license zizmor'
 set --
 for scanner in $scanners
 do
-  jq --null-input --arg scanner "$scanner" \
-    '{schemaVersion:"1.0",scanner:{name:$scanner,reference:("synthetic:"+$scanner)},state:"completed",findings:[]}' \
+  reference=$(jq -er --arg scanner "$scanner" '.scannerReferences[$scanner]' policy/release-v1.json)
+  jq --null-input --arg scanner "$scanner" --arg reference "$reference" \
+    --arg source "$SOURCE_DIGEST" --arg subject "$subject" --arg time "$EVALUATION_TIME" \
+    '{schemaVersion:"1.0",scanner:{name:$scanner,reference:$reference},sourceDigest:$source,
+      subjectDigest:$subject,scannedAt:$time,databaseUpdatedAt:$time,state:"completed",findings:[]}'  \
     >"$SECURITY_DIR/normalized/$scanner.json"
   set -- "$@" -report "$SECURITY_DIR/normalized/$scanner.json"
 done
@@ -52,8 +56,8 @@ go run ./cmd/security-gate \
   -output "$SECURITY_DIR/decision.json" \
   "$@"
 
-jq --null-input --arg source "$SOURCE_DIGEST" \
-  '{schemaVersion:"1.0",sourceDigest:$source,tests:[
+jq --null-input --arg source "$SOURCE_DIGEST" --arg subject "$subject" \
+  '{schemaVersion:"1.0",sourceDigest:$source,subjectDigest:$subject,tests:[
     {id:"build",state:"passed",ref:"make build"},
     {id:"container-smoke",state:"passed",ref:"make container-smoke"},
     {id:"host",state:"passed",ref:"make verify"},

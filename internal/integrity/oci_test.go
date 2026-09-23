@@ -29,6 +29,7 @@ func TestInspectOCIArchiveRejectsInvalidEvidence(t *testing.T) {
 		options archiveOptions
 	}{
 		{name: "wrong platform", options: archiveOptions{architecture: "arm64"}},
+		{name: "wrong config platform", options: archiveOptions{configArchitecture: "arm64"}},
 		{name: "tampered layer", options: archiveOptions{tamperLayer: true}},
 		{name: "oversized layer", options: archiveOptions{oversizedLayer: true}},
 		{name: "missing manifest", options: archiveOptions{omitManifest: true}},
@@ -45,11 +46,13 @@ func TestInspectOCIArchiveRejectsInvalidEvidence(t *testing.T) {
 }
 
 type archiveOptions struct {
-	architecture   string
-	tamperLayer    bool
-	oversizedLayer bool
-	omitManifest   bool
-	duplicateIndex bool
+	architecture       string
+	configArchitecture string
+	omitPlatform       bool
+	tamperLayer        bool
+	oversizedLayer     bool
+	omitManifest       bool
+	duplicateIndex     bool
 }
 
 func writeOCIArchive(t *testing.T, options archiveOptions) (string, string) {
@@ -65,6 +68,9 @@ func writeOCIArchive(t *testing.T, options archiveOptions) (string, string) {
 	})
 	path := filepath.Join(directory, "image.oci.tar")
 	config := []byte(`{"architecture":"amd64","os":"linux"}`)
+	if options.configArchitecture != "" {
+		config = []byte(`{"architecture":"` + options.configArchitecture + `","os":"linux"}`)
+	}
 	layer := []byte("application-layer")
 	configDescriptor := ociDescriptor{MediaType: "application/vnd.oci.image.config.v1+json", Digest: digestBytes(config), Size: int64(len(config))}
 	layerDescriptor := ociDescriptor{MediaType: "application/vnd.oci.image.layer.v1.tar+gzip", Digest: digestBytes(layer), Size: int64(len(layer))}
@@ -85,6 +91,9 @@ func writeOCIArchive(t *testing.T, options archiveOptions) (string, string) {
 		Digest:    digestBytes(manifestBytes),
 		Size:      int64(len(manifestBytes)),
 		Platform:  &ociPlatform{Architecture: architecture, OS: "linux"},
+	}
+	if options.omitPlatform {
+		manifestDescriptor.Platform = nil
 	}
 	index := ociIndex{SchemaVersion: 2, MediaType: ociIndexMediaType, Manifests: []ociDescriptor{manifestDescriptor}}
 	indexBytes, err := json.Marshal(index)
@@ -115,6 +124,14 @@ func writeOCIArchive(t *testing.T, options archiveOptions) (string, string) {
 		t.Fatal(err)
 	}
 	return path, manifestDescriptor.Digest
+}
+
+func TestInspectOCIArchiveDerivesOptionalIndexPlatformFromConfig(t *testing.T) {
+	path, digest := writeOCIArchive(t, archiveOptions{omitPlatform: true})
+	info, err := InspectOCIArchive(path)
+	if err != nil || info.ManifestDigest != digest || info.OS != "linux" || info.Architecture != "amd64" {
+		t.Fatalf("platform derivation failed: %#v, %v", info, err)
+	}
 }
 
 func writeTarFixture(t *testing.T, writer *tar.Writer, name string, content []byte) {

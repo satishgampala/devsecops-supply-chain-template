@@ -4,14 +4,14 @@ M05 turns the preceding controls into one deterministic, machine-readable decisi
 
 ## Evidence contract
 
-`policy/release-v1.json` pins the accepted schema, artifact name, platform, security-policy digest, signing-policy digest, Cosign version, required tests, and required scanners. The referenced signing policy pins signed roles; the verifier enforces fixed evidence-size limits. A release manifest binds these requirements to one immutable OCI manifest digest and one 40-character source commit.
+`policy/release-v1.json` pins the accepted schema, artifact name, platform, security-policy digest, signing-policy digest, Cosign version, required tests, required scanners, exact scanner references, report age, and database age. The referenced signing policy pins signed roles; the verifier enforces fixed evidence-size limits. A release manifest binds these requirements to one immutable OCI manifest digest and one 40-character source commit.
 
 The manifest references:
 
 - the OCI archive and independent M03 verification result;
 - the raw SPDX 2.3 document and local SLSA provenance;
 - every normalized M02 scanner report and its recorded security decision;
-- exact test outcomes for host, race, build, container, scanner fixtures, and integrity;
+- exact test outcomes for host, race, build, container, scanner fixtures, and integrity, bound to the source commit and observed container image digest;
 - the M04 identity-policy decision and a complete validation statement; and
 - four Sigstore bundles for the archive, SPDX document, local provenance, and validation statement.
 
@@ -25,7 +25,7 @@ The verifier opens manifest-controlled inputs only below one explicit evidence d
 
 The decision engine:
 
-1. re-runs the M02 policy against every normalized scanner report and compares the result with the recorded decision;
+1. verifies scanner references, source/candidate bindings, and freshness, then re-runs the M02 policy against every normalized scanner report and compares the result with the recorded decision;
 2. checks required tests and exact policy digests at the manifest evaluation time;
 3. parses the OCI archive and independently derives its manifest digest, platform, config, layers, and archive hash;
 4. verifies SPDX and provenance subjects against that derived OCI digest;

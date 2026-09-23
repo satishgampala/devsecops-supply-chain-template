@@ -20,7 +20,7 @@ Wildcards, pull-request triggers, feature refs, unknown fields, trailing JSON, d
 
 ## Three-job boundary
 
-The `build` job has `contents: read`, checks out source without persisted credentials, runs M03 integrity generation, and uploads an explicit file set. It has no OIDC permission.
+The `build` job has `contents: read`, checks out source without persisted credentials, runs `make candidate` to test and scan one immutable OCI subject, and uploads an explicit file set. It has no OIDC permission.
 
 The dependent `sign` job has only `actions: read` and `id-token: write`. It runs only for the default branch on `push` or `workflow_dispatch`, downloads the bounded evidence set, checks its M03 checksums, installs immutable Cosign 3.1.2, and never checks out source. It signs the OCI archive, raw SPDX document, local provenance, and complete validation statement as separate blobs.
 

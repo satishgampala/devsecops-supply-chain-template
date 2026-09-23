@@ -75,7 +75,7 @@ func InspectOCIArchive(path string) (ArchiveInfo, error) {
 	if descriptor.MediaType != ociManifestMediaType {
 		return ArchiveInfo{}, fmt.Errorf("OCI index subject is not an image manifest")
 	}
-	if descriptor.Platform == nil || descriptor.Platform.OS != "linux" || descriptor.Platform.Architecture != "amd64" {
+	if descriptor.Platform != nil && (descriptor.Platform.OS != "linux" || descriptor.Platform.Architecture != "amd64") {
 		return ArchiveInfo{}, fmt.Errorf("OCI image platform must be linux/amd64")
 	}
 	manifestBytes, err := readAndVerifyDescriptor(path, descriptor, maxOCIJSONSize)
@@ -92,8 +92,13 @@ func InspectOCIArchive(path string) (ArchiveInfo, error) {
 	if strings.TrimSpace(manifest.Config.MediaType) == "" {
 		return ArchiveInfo{}, fmt.Errorf("OCI manifest config media type is required")
 	}
-	if _, err := readAndVerifyDescriptor(path, manifest.Config, maxOCIJSONSize); err != nil {
+	configBytes, err := readAndVerifyDescriptor(path, manifest.Config, maxOCIJSONSize)
+	if err != nil {
 		return ArchiveInfo{}, fmt.Errorf("verify OCI config: %w", err)
+	}
+	var platform ociPlatform
+	if err := json.Unmarshal(configBytes, &platform); err != nil || platform.OS != "linux" || platform.Architecture != "amd64" {
+		return ArchiveInfo{}, fmt.Errorf("OCI config platform must be linux/amd64")
 	}
 	if len(manifest.Layers) == 0 {
 		return ArchiveInfo{}, fmt.Errorf("OCI manifest must contain at least one layer")
@@ -109,8 +114,8 @@ func InspectOCIArchive(path string) (ArchiveInfo, error) {
 	return ArchiveInfo{
 		ManifestDigest: descriptor.Digest,
 		ArchiveSHA256:  archiveHash,
-		OS:             descriptor.Platform.OS,
-		Architecture:   descriptor.Platform.Architecture,
+		OS:             platform.OS,
+		Architecture:   platform.Architecture,
 	}, nil
 }
 

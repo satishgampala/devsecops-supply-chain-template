@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/satishgampala/devsecops-supply-chain-template/internal/securityreport"
@@ -16,6 +17,7 @@ func TestRunPreservesDatabaseMetadata(t *testing.T) {
 		t.Fatal(err)
 	}
 	args := []string{"-scanner", "govulncheck", "-reference", "test", "-input", "input.sarif", "-output", "normalized.json", "-scanner-exit-code", "0"}
+	args = append(args, "-source-digest", strings.Repeat("a", 40), "-subject-digest", "sha256:"+strings.Repeat("b", 64), "-scanned-at", "2026-09-23T01:00:00Z")
 	for _, test := range []struct{ override, want string }{
 		{"", "2026-09-23T00:00:00Z"},
 		{"2026-09-23T01:00:00Z", "2026-09-23T01:00:00Z"},
@@ -38,9 +40,17 @@ func TestRunPreservesDatabaseMetadata(t *testing.T) {
 		if report.DatabaseUpdatedAt != test.want {
 			t.Fatalf("timestamp=%q want=%q", report.DatabaseUpdatedAt, test.want)
 		}
+		if report.SourceDigest != strings.Repeat("a", 40) || report.SubjectDigest != "sha256:"+strings.Repeat("b", 64) || report.ScannedAt != "2026-09-23T01:00:00Z" {
+			t.Fatalf("candidate context was lost: %#v", report)
+		}
 	}
 	if err := run(append(args, "-database-updated-at", "not-a-timestamp")); err == nil {
 		t.Fatal("accepted malformed timestamp")
+	}
+	for _, flag := range []string{"-source-digest", "-subject-digest", "-scanned-at"} {
+		if err := run(append(append([]string(nil), args...), flag, "invalid")); err == nil {
+			t.Fatalf("accepted malformed candidate context: %s", flag)
+		}
 	}
 }
 
