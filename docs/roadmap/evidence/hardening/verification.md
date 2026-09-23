@@ -61,8 +61,30 @@ Scope: corrective working tree following `090fa07`.
 - `make docs-check` uses registry-verified immutable Lychee 0.24.2 and Mermaid CLI 11.12.0 images. Local links/fragments and diagram rendering pass; temporary broken-link and invalid-Mermaid probes each cause nonzero failure. External URLs are intentionally excluded. Required-check guidance no longer requires the default-branch-only Scorecard job on PRs.
 - `make verify security-test`, development container build/smoke, shell syntax, proposed-source Gitleaks scan, and whitespace checks pass. Consumer evidence remains under ignored `.local/template-fixtures.CohLeU/`.
 
-## Remaining work
+## Final integrated validation — 2026-09-23
 
-Portfolio demonstration and final integrated validation remain pending under the [implementation plan](../../implementation-plans/2026-09-23-portfolio-hardening.md).
+Executable and documentation revision: `81702be919a0e1ec5ccb9af773fbba879199ea89`. The final follow-up commit records verification only; it changes no executable, workflow, or policy. A [machine-readable local record](local-results.json) contains the measured artifact, environment, checks, and explicit signature limitation.
 
-Hosted execution remains blocked by the observed GitHub account billing lock. Repository protections and publication remain separate, unverified remote gates.
+| Check | Observed result |
+| --- | --- |
+| `make candidate` | Passed host checks, race tests, all eight seeded scanner controls, one OCI build, restricted runtime by digest, and eight live scanners. |
+| `make workflow-check docs-check security-test signing-test` | Passed all seven workflow files, local links/fragments, all five Mermaid diagrams, scanner execution fixtures, and signing contracts. |
+| `make template-test` | Lowercase and mixed-case detached consumers passed; each exercised the adopted-repository target. Invalid identity and seeded Go source were rejected. |
+| `make integrity-repro` | OCI archive, canonical SBOM, local provenance, tooling, and subject matched across two clean builds. |
+| `make release-policy-test` | Synthetic positive and all CLI tamper scenarios passed; signatures remain explicit test substitutes. |
+| `make container-build container-smoke` | Development image passed both endpoints and runtime restrictions. |
+| Shell syntax, secret checks, `git diff --check` | Passed. Gitleaks checked history during the live gate and proposed source separately. |
+
+The real candidate's scan decision was evaluated at `2026-09-23T04:39:04Z`: eight completed scanners, zero failed scanners, two findings, zero blocking findings, and one accepted exception. The findings were the governed Gosec G204 subprocess warning and a low-severity Apache-2.0 license notice. No new exception was added. The G204 exception expires `2026-10-19`.
+
+All eight reports and the test summary named source `81702be919a0e1ec5ccb9af773fbba879199ea89`. Those reports, the test summary, and the observed running container shared subject `sha256:a1f15e9a8fb114258059b80b8d6b8171b90127777be50c6ad913e33149f6c520`. Scan start was `2026-09-23T04:38:24Z`. Govulncheck recorded database time `2026-09-16T18:00:43Z`; Trivy recorded `2026-09-23T01:09:35.013781075Z`.
+
+The OCI tar was **2,881,536 bytes**, SHA-256 `647b5ee7a1880711f12fcda2063fa24b57930478407d789bf53f966be91d687b`. Direct layer inspection found only `/service`, a **6,725,758-byte** binary owned by `65532:65532`. Image config retained that user, `/service` entrypoint, and the executable health check. Candidate validation took **87.52 seconds** on Darwin arm64 with Docker server 29.5.2/containerd, warm caches, and concurrent consumer checks. This single observation is not a benchmark or hosted-runtime prediction.
+
+An additional local integration reused the real candidate archive, actual runtime test summary, and live scanner reports through both collector phases and the release verifier. Only the signature boundary was replaced with the existing frozen-hash test double. The unmodified evidence was eligible; rehashed tests failed `VALIDATION_EVIDENCE_MISMATCH`; rewritten validation bytes failed `SIGNATURE_INVALID`. This closes the local producer/verifier integration check without claiming hosted cryptography.
+
+Candidate outputs are retained locally under `.local/final-candidate-81702be/`; integrated evidence and decisions under `.local/final-live-contract/`; command logs under `.local/verification/81702be/`. These ignored paths are local diagnostics, not public release assets. Later synthetic fixture commands regenerate `dist/`, so the preserved candidate directory is the authoritative local snapshot for this record.
+
+## External gates
+
+All authorized local corrective milestones and portfolio documentation are implemented and verified. Hosted execution remains blocked by the observed GitHub account billing lock. Real signatures/attestations, applied repository protections, hosted consumer calls, tags, and publication remain unverified and outside this local completion claim. No push, pull request, settings change, tag, or release was performed.

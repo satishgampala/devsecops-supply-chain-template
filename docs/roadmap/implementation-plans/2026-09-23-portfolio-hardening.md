@@ -21,5 +21,5 @@ Commits are authorized. Pushes, pull requests, repository-setting changes, tags,
 - Verified: authenticated validation statements and rejection of rehashed test/scanner evidence with unit and clean CLI fixtures.
 - Verified: one candidate across runtime tests and scans, exact scanner references, and report/database freshness enforcement.
 - Verified locally: initializer case handling, consolidated CI, consumer fixtures, workflow lint, and documentation checks. Hosted execution remains unverified.
-- Working: portfolio demonstration and complete validation.
+- Verified: portfolio README, corrected architecture, reproducible walkthrough, measured candidate results, and complete local integration at `81702be`. See the [final verification record](../evidence/hardening/verification.md).
 - External: hosted execution, repository protections, and publication.

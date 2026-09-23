@@ -1,0 +1,88 @@
+{
+  "kind": "local-verification-record",
+  "sourceCommit": "81702be919a0e1ec5ccb9af773fbba879199ea89",
+  "evaluatedAt": "2026-09-23T04:39:04Z",
+  "artifact": {
+    "manifestDigest": "sha256:a1f15e9a8fb114258059b80b8d6b8171b90127777be50c6ad913e33149f6c520",
+    "archiveSHA256": "647b5ee7a1880711f12fcda2063fa24b57930478407d789bf53f966be91d687b",
+    "archiveBytes": 2881536,
+    "platform": "linux/amd64",
+    "runtimeFiles": [
+      {
+        "path": "service",
+        "size": 6725758,
+        "uid": 65532,
+        "gid": 65532
+      }
+    ]
+  },
+  "environment": {
+    "host": "Darwin arm64",
+    "go": "go1.26.8",
+    "dockerClient": "24.0.7",
+    "dockerServer": "29.5.2",
+    "imageStore": "containerd"
+  },
+  "candidateWallSeconds": 87.52,
+  "timingScope": "One local run with warm caches and concurrent consumer checks; not a benchmark or hosted-runtime estimate.",
+  "scannerCounts": {
+    "requiredScanners": 8,
+    "reports": 8,
+    "completedScanners": 8,
+    "failedScanners": 0,
+    "findings": 2,
+    "blockingFindings": 0,
+    "acceptedExceptions": 1
+  },
+  "acceptedExceptions": [
+    "release-cosign-argv-g204"
+  ],
+  "tests": [
+    {
+      "id": "build",
+      "state": "passed",
+      "ref": "make build"
+    },
+    {
+      "id": "container-smoke",
+      "state": "passed",
+      "ref": "make container-smoke IMAGE_ARCHIVE=dist/image.oci.tar"
+    },
+    {
+      "id": "host",
+      "state": "passed",
+      "ref": "make verify"
+    },
+    {
+      "id": "integrity",
+      "state": "passed",
+      "ref": "make integrity"
+    },
+    {
+      "id": "race",
+      "state": "passed",
+      "ref": "make test-race"
+    },
+    {
+      "id": "security-fixtures",
+      "state": "passed",
+      "ref": "make security-fixtures"
+    }
+  ],
+  "additionalChecks": {
+    "workflowLint": "passed",
+    "markdownAndMermaid": "passed",
+    "scannerExecutionFixtures": "passed",
+    "signingPolicyFixtures": "passed",
+    "releasePolicyFixtures": "passed",
+    "lowercaseConsumer": "passed",
+    "mixedCaseConsumer": "passed",
+    "reproducibility": "passed",
+    "developmentContainer": "passed",
+    "shellSyntax": "passed",
+    "secretScan": "passed"
+  },
+  "signatureBoundary": "Explicit test double with frozen content hashes; real Sigstore cryptography is unverified.",
+  "releaseAuthorized": false,
+  "hostedStatus": "Blocked by GitHub account billing lock; repository protections and publication unverified."
+}
