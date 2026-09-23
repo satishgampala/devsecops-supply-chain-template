@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1148" viewBox="0 0 1120 1148" role="img" aria-labelledby="title description">
+  <title id="title">DevSecOps supply chain: one artifact, three trust boundaries</title>
+  <desc id="description">A clean Go source commit produces one OCI candidate. Restricted runtime tests and eight scanners reuse that candidate. SPDX inventory, local SLSA provenance, and a validation statement bind evidence to the source and image. A separate main-only Cosign signer has OIDC access but no source checkout and signs four blobs using Sigstore. An independent Go verifier has no OIDC and rechecks the complete evidence and signatures, returning an eligible immutable digest or rejection reasons. Local gates are verified; real hosted signatures remain unverified. Eligibility does not publish or deploy an artifact.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 Z" fill="#52657d"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #172b46; }
+      .eyebrow { font-size: 16px; font-weight: 700; letter-spacing: 2px; fill: #51647c; }
+      .headline { font-size: 36px; font-weight: 700; letter-spacing: -0.6px; }
+      .subtitle { font-size: 21px; fill: #51647c; }
+      .zone-title { font-size: 19px; font-weight: 700; letter-spacing: 0.8px; }
+      .number { font-size: 16px; font-weight: 700; fill: #fff; text-anchor: middle; }
+      .permission { font-size: 17px; fill: #51647c; text-anchor: end; }
+      .node-title { font-size: 22px; font-weight: 700; }
+      .body { font-size: 19px; fill: #42556d; }
+      .small { font-size: 17px; fill: #51647c; }
+      .white { fill: #fff; }
+      .light { fill: #dceaff; }
+      .line { fill: none; stroke: #52657d; stroke-width: 2; stroke-linejoin: round; marker-end: url(#arrow); }
+      .card { fill: #fff; stroke: #ccd6e2; stroke-width: 1.4; }
+    </style>
+  </defs>
+
+  <rect width="1120" height="1148" rx="18" fill="#fff"/>
+  <text class="eyebrow" x="40" y="43">DEVSECOPS / PLATFORM ENGINEERING</text>
+  <text class="headline" x="40" y="92">One artifact. Evidence at every boundary.</text>
+  <text class="subtitle" x="40" y="128">A Go service delivered through verifiable supply-chain controls.</text>
+
+  <!-- Boundary 1: source-aware work has read-only repository access, no OIDC. -->
+  <rect x="32" y="160" width="1056" height="476" rx="16" fill="#f4f7fc" stroke="#c7d5e8" stroke-width="1.5"/>
+  <rect x="56" y="181" width="36" height="30" rx="7" fill="#285ea8"/>
+  <text class="number" x="74" y="202">01</text>
+  <text class="zone-title" x="104" y="202">BUILD &amp; VALIDATE</text>
+  <text class="permission" x="1064" y="201">contents: read · no OIDC</text>
+
+  <rect class="card" x="56" y="236" width="250" height="114" rx="10"/>
+  <text class="node-title" x="76" y="268">Clean source commit</text>
+  <text class="body" x="76" y="299">Go · tests · race checks</text>
+  <text class="small" x="76" y="326">Pinned toolchain + builder</text>
+
+  <path class="line" d="M306 292 H382"/>
+  <text class="small" x="344" y="279" text-anchor="middle">build</text>
+  <rect x="382" y="236" width="312" height="114" rx="10" fill="#173f78"/>
+  <text class="node-title white" x="402" y="268">One OCI candidate</text>
+  <text class="body light" x="402" y="299">linux/amd64 · scratch</text>
+  <text class="small light" x="402" y="326">Immutable manifest digest</text>
+
+  <path class="line" d="M694 292 H770"/>
+  <text class="small" x="732" y="279" text-anchor="middle">reuse</text>
+  <rect class="card" x="770" y="236" width="294" height="114" rx="10"/>
+  <text class="node-title" x="790" y="268">Test &amp; scan</text>
+  <text class="body" x="790" y="299">Restricted runtime · 8 scanners</text>
+  <text class="small" x="790" y="326">Source + image checks</text>
+
+  <!-- Inventory/provenance describe the candidate; test/scan hashes enter the statement. -->
+  <path class="line" d="M538 350 V372 H203 V402"/>
+  <path class="line" d="M538 372 H561 V402"/>
+  <path class="line" d="M917 350 V402"/>
+  <rect class="card" x="56" y="402" width="294" height="100" rx="10"/>
+  <text class="node-title" x="76" y="438">SPDX SBOM</text>
+  <text class="body" x="76" y="470">Inventory of the final OCI</text>
+  <rect class="card" x="414" y="402" width="294" height="100" rx="10"/>
+  <text class="node-title" x="434" y="438">Local SLSA provenance</text>
+  <text class="body" x="434" y="470">Source · builder · subject</text>
+  <rect class="card" x="770" y="402" width="294" height="100" rx="10"/>
+  <text class="node-title" x="790" y="438">Validation statement</text>
+  <text class="body" x="790" y="470">Hashes all evidence + policies</text>
+
+  <path class="line" d="M203 502 V536"/>
+  <path class="line" d="M561 502 V536"/>
+  <path class="line" d="M917 502 V536"/>
+  <rect x="56" y="536" width="1008" height="52" rx="9" fill="#e4edf9" stroke="#c7d5e8"/>
+  <text x="560" y="568" text-anchor="middle" font-size="20" font-weight="700">4 signing inputs: OCI archive + SBOM + provenance + validation statement</text>
+  <text class="small" x="560" y="617" text-anchor="middle">Same source commit + manifest digest across runtime, reports and evidence.</text>
+
+  <!-- Stage connectors denote evidence transfer between separate jobs. -->
+  <path class="line" d="M560 636 V678"/>
+  <text class="small" x="579" y="662">evidence transfer</text>
+
+  <!-- Boundary 2: main-only hosted identity; no source checkout or build. -->
+  <rect x="32" y="678" width="1056" height="180" rx="16" fill="#fff9f0" stroke="#d8b77c" stroke-width="1.5"/>
+  <rect x="56" y="699" width="36" height="30" rx="7" fill="#95611b"/>
+  <text class="number" x="74" y="720">02</text>
+  <text class="zone-title" x="104" y="720">ISOLATED SIGNING</text>
+  <text x="1064" y="719" text-anchor="end" font-size="17" font-weight="700" fill="#805014">HOSTED · UNVERIFIED</text>
+
+  <rect class="card" x="56" y="749" width="500" height="84" rx="10"/>
+  <text class="node-title" x="76" y="781">Cosign · four signed blobs</text>
+  <text class="body" x="76" y="811">OIDC token · main only · no checkout</text>
+  <path class="line" d="M556 790 H694" marker-start="url(#arrow)"/>
+  <text class="small" x="625" y="778" text-anchor="middle">identity</text>
+  <rect class="card" x="694" y="749" width="370" height="84" rx="10"/>
+  <text class="node-title" x="714" y="781">Sigstore trust services</text>
+  <text class="body" x="714" y="811">Fulcio certificate · Rekor log</text>
+
+  <path class="line" d="M560 858 V900"/>
+  <text class="small" x="579" y="884">evidence + signature bundles</text>
+
+  <!-- Boundary 3: verifier reopens original evidence; it cannot mint identities. -->
+  <rect x="32" y="900" width="1056" height="184" rx="16" fill="#f1f8f6" stroke="#bed6ce" stroke-width="1.5"/>
+  <rect x="56" y="921" width="36" height="30" rx="7" fill="#247461"/>
+  <text class="number" x="74" y="942">03</text>
+  <text class="zone-title" x="104" y="942">INDEPENDENT VERIFICATION</text>
+  <text class="permission" x="1064" y="941">versioned policy · no OIDC</text>
+
+  <rect class="card" x="56" y="968" width="566" height="90" rx="10"/>
+  <text class="node-title" x="76" y="1001">Go release-policy verifier</text>
+  <text class="body" x="76" y="1034">Rechecks hashes, identity, freshness + 4 signatures</text>
+  <path class="line" d="M622 1013 H677 V990 H732"/>
+  <path class="line" d="M677 1013 V1037 H732"/>
+  <rect x="732" y="968" width="332" height="43" rx="9" fill="#dff1e8" stroke="#97c6af"/>
+  <text x="752" y="996" font-size="20" font-weight="700" fill="#195941">PASS · eligible manifest digest</text>
+  <rect x="732" y="1015" width="332" height="43" rx="9" fill="#fceae8" stroke="#dcb1aa"/>
+  <text x="752" y="1043" font-size="20" font-weight="700" fill="#98342d">FAIL · stable rejection reasons</text>
+
+  <text x="560" y="1121" text-anchor="middle" font-size="18" fill="#42556d">Local gates verified. Real hosted signatures unverified. Eligibility does not publish or deploy.</text>
+</svg>

@@ -6,6 +6,12 @@ The project demonstrates platform engineering through reproducible builds, polic
 
 **Status:** locally verified; not a published release. Hosted jobs are blocked by a GitHub account billing lock observed on 2026-09-23. Real keyless signatures, applied repository protections, and hosted consumer runs remain unverified. See the [verification record](docs/roadmap/evidence/hardening/verification.md) and [current status](docs/roadmap/STATUS.md).
 
+## Architecture
+
+[![Supply-chain architecture: build and validate one OCI candidate, sign four evidence blobs in an isolated OIDC job, then independently verify the evidence to accept a digest or reject it with stable reasons. Hosted signatures remain unverified.](docs/architecture/assets/supply-chain-overview.svg)](docs/architecture/assets/supply-chain-overview.svg)
+
+The release path separates building, signing, and policy evaluation into jobs with different permissions. CI reuses the candidate checks; the signing workflow builds its own candidate. Local signature tests use an explicit test double. [Explore the control flow](docs/architecture/pipeline-flow.md).
+
 ## What this demonstrates
 
 - **Artifact identity:** build one `linux/amd64` OCI candidate; smoke-test and scan that same manifest digest.
@@ -13,25 +19,6 @@ The project demonstrates platform engineering through reproducible builds, polic
 - **Evidence integrity:** independently hash OCI contents and verify SPDX and SLSA provenance against the resulting subject.
 - **Signing boundaries:** a no-checkout OIDC signer signs four blobs, including a statement covering test and scanner evidence; a separate verifier rechecks every evidence class.
 - **Platform adoption:** initialize exact repository identities, run lowercase and mixed-case consumer fixtures, and reuse the validation workflow without secrets.
-
-```mermaid
-flowchart LR
-  source[Clean source commit] --> checks[Host and race tests<br/>Scanner rejection fixtures]
-  checks --> image[Build one OCI candidate]
-  image --> runtime[Restricted runtime test]
-  image --> scans[Eight live scanner reports]
-  image --> inventory[SPDX and local provenance]
-  runtime --> statement[Complete validation statement]
-  scans --> statement
-  inventory --> statement
-  statement -.-> signer[Hosted signer<br/>OIDC, no checkout]
-  signer -.-> verifier[Independent release verifier]
-  statement --> fixtures[Local tamper fixtures]
-  fixtures --> verifier
-  verifier --> decision{Eligible digest or<br/>stable rejection reasons}
-```
-
-Dashed paths require hosted execution. Local signature fixtures use an explicit test double; they do not establish cryptographic authenticity.
 
 ## Run it
 
