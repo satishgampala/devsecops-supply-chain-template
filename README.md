@@ -59,6 +59,14 @@ curl --fail -H 'Content-Type: application/json' \
 
 Requests are bounded to a 4 KiB JSON body and 1 KiB value. Runtime defaults use numeric user `65532:65532`, a read-only filesystem, no capabilities, no new privileges, and a PID limit of 100.
 
+## Detailed example: one candidate, three outcomes
+
+This recorded **2026-09-23 local example** uses a real candidate and live scanner reports. Its signature boundary is an explicit test double. Follow the evidence files, then compare the original inputs with two deliberate tamper attempts.
+
+[![Detailed release example: source commit 81702be produces one OCI candidate, runtime and eight scanners generate bound evidence, a validation statement protects the evidence hashes, and the independent verifier accepts the original local test while rejecting rehashed tests and a rewritten statement. Signatures are simulated; no release is authorized.](docs/architecture/assets/release-evidence-example.svg)](docs/architecture/assets/release-evidence-example.svg)
+
+[Open full-size diagram](docs/architecture/assets/release-evidence-example.svg) · [Full source/artifact identities](docs/roadmap/evidence/hardening/local-results.json) · [Observed verification and tamper results](docs/roadmap/evidence/hardening/verification.md#final-integrated-validation--2026-09-23) · [Reproduce the walkthrough](docs/demo/release-walkthrough.md)
+
 ## Evidence worth reviewing
 
 The [corrective verification record](docs/roadmap/evidence/hardening/verification.md) records actual commands and limitations. Local candidate validation on 2026-09-23 completed **8/8 scanners**, with **0 blocking findings** and **1 existing, narrowly scoped exception**. Results are time-sensitive; the Gosec G204 exception expires **2026-10-19**.
